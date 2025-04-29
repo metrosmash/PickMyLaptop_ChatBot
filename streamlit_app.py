@@ -7,9 +7,12 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-import re
-from sklearn.model_selection import train_test_split
 
+import re
+import requests
+from io import StringIO
+
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, OneHotEncoder, OrdinalEncoder
 from sklearn.impute import SimpleImputer, KNNImputer
 from sklearn.model_selection import train_test_split # Split data into train data and test data
@@ -28,8 +31,18 @@ st.write(
 # Ask user for their OpenAI API key via `st.text_input`.
 # Alternatively, you can store the API key in `./.streamlit/secrets.toml` and access it
 # via `st.secrets`, see https://docs.streamlit.io/develop/concepts/connections/secrets-management
+# "https://raw.githubusercontent.com/metrosmash/PickMyLaptop_ChatBot/refs/heads/main/Data/cleaned.csv"
 
-data_f = pd.read_csv("Data\cleaned.csv")
+def load_original_data():
+    url = 'https://raw.githubusercontent.com/[username]/[repository]/main/[file].csv'
+    response = requests.get(url)
+    if response.status_code == 200:
+        return pd.read_csv(StringIO(response.text))
+    else:
+        st.error("Failed to load data from GitHub.")
+        return None
+
+data_f = load_original_data()
 
 st.write(data_f.head())
 '''

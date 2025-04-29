@@ -5,3 +5,4 @@ matplotlib
 seaborn
 regex
 scikit-learn
+requests
