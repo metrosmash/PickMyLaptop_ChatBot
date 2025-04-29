@@ -44,7 +44,7 @@ def load_original_data():
 
 data_f = load_original_data()
 
-st.write(data_f.head())
+st.write(data_f)
 '''
 openai_api_key = st.text_input("OpenAI API Key", type="password")
 if not openai_api_key:
