@@ -23,7 +23,7 @@ from sklearn.compose import ColumnTransformer
 # Show title and description.
 st.title("PickMyLaptop_Chatbot")
 st.write(
-    "This is a simple chatbot that uses Gemini flash 2.5 model to help users pick thier prefered laptop. "
+    "This is a simple chatbot that uses Gemini flash 2.5 model to help users pick their preferred laptop. "
     "To use this app, you need to provide a Gemini API key, which you can get [here](https://ai.google.dev/gemini-api/docs/api-key). "
     "You can also learn how to build this app step by step by [following our tutorial](https://docs.streamlit.io/develop/tutorials/llms/build-conversational-apps)."
 )
@@ -31,10 +31,9 @@ st.write(
 # Ask user for their OpenAI API key via `st.text_input`.
 # Alternatively, you can store the API key in `./.streamlit/secrets.toml` and access it
 # via `st.secrets`, see https://docs.streamlit.io/develop/concepts/connections/secrets-management
-# "https://raw.githubusercontent.com/metrosmash/PickMyLaptop_ChatBot/refs/heads/main/Data/cleaned.csv"
 
 def load_original_data():
-    url = 'https://raw.githubusercontent.com/[username]/[repository]/main/[file].csv'
+    url = 'https://raw.githubusercontent.com/metrosmash/PickMyLaptop_ChatBot/refs/heads/main/Data/cleaned.csv'
     response = requests.get(url)
     if response.status_code == 200:
         return pd.read_csv(StringIO(response.text))
