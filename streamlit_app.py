@@ -53,6 +53,7 @@ else:
     # Create a Gemini API client.
     client = genai.Client(api_key=Gemini_api_key)
 
+
 '''
 
     # Create a session state variable to store the chat messages. This ensures that the
