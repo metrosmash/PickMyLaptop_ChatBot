@@ -5,3 +5,4 @@ seaborn
 regex
 scikit-learn
 requests
+SQLAlchemy==1.4.0
