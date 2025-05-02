@@ -14,13 +14,6 @@ import re
 import requests
 from io import StringIO
 
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler, OneHotEncoder, OrdinalEncoder
-from sklearn.impute import SimpleImputer, KNNImputer
-from sklearn.model_selection import train_test_split # Split data into train data and test data
-from sklearn.metrics import r2_score, mean_squared_error # Metrics for Regression Analysis
-from sklearn.pipeline import Pipeline
-from sklearn.compose import ColumnTransformer
 
 # Show title and description.
 st.title("PickMyLaptop_Chatbot")
@@ -38,7 +31,7 @@ db_username = st.secrets["DB_username"]
 db_password = st.secrets["DB_password"]
 
 conn = pymysql.connect(
-    host ="localhost",
+    host ="localhost:3306",
     user = db_username,
     password = db_password,
     database = "laptop_datadb",
