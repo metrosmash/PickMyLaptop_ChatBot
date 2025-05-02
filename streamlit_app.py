@@ -2,6 +2,7 @@
 from google import genai
 from google.genai import types
 import streamlit as st
+import pymysql
 
 import pandas as pd
 import numpy as np
@@ -32,11 +33,39 @@ st.write(
 # Alternatively, you can store the API key in `./.streamlit/secrets.toml` and access it
 # via `st.secrets`, see https://docs.streamlit.io/develop/concepts/connections/secrets-management
 
-#db_username = st.secrets["DB_username"]
-#db_password = st.secrets["DB_password"]
+db_username = st.secrets["DB_username"]
+db_password = st.secrets["DB_password"]
 
-# passord to connect to the database
-laptop_db.connect(username=st.secrets.db_credentials.username, password=st.secrets.db_credentials.password)
+conn = pymysql.connect(
+    host ="localhost",
+    user = db_username,
+    password = db_password,
+    database = "laptop_datadb",
+
+    cursorclass= pymysql.cursors.DictCursor
+    )
+cursor = conn.cursor()
+
+create_table_query = """
+    CREATE TABLE IF NOT EXISTS Laptop (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    Brand TEXT,
+    Product_Description TEXT,
+    Screen_Size TEXT,
+    RAM FLOAT, 
+    Processor TEXT,
+    GPU TEXT,
+    GPU_Type TEXT,
+    Resolution TEXT,
+    Condition TEXT,
+    Price FLOAT,
+    SSD INTEGER,
+    HDD INTEGER
+)
+    """
+cursor.execute(create_table_query)
+conn.commit()
+
 
 api_key = st.secrets["API_key"]
 
