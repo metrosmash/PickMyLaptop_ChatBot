@@ -3,6 +3,7 @@ from google import genai
 from google.genai import types
 import streamlit as st
 import pymysql
+import pymysql.cursors
 
 import pandas as pd
 import numpy as np
@@ -57,7 +58,7 @@ create_table_query = """
     GPU TEXT,
     GPU_Type TEXT,
     Resolution TEXT,
-    Condition TEXT,
+    Condition1 TEXT,
     Price FLOAT,
     SSD INTEGER,
     HDD INTEGER
