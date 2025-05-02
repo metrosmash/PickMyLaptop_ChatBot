@@ -29,14 +29,14 @@ st.write(
 
 db_username = st.secrets["DB_username"]
 db_password = st.secrets["DB_password"]
+# host ="localhost:3306"
 
 conn = pymysql.connect(
-    host ="localhost:3306",
+    host ="localhost",
     user = db_username,
     password = db_password,
     database = "laptop_datadb",
-
-    cursorclass= pymysql.cursors.DictCursor
+    cursorclass=pymysql.cursors.DictCursor
     )
 cursor = conn.cursor()
 
