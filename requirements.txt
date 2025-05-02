@@ -6,4 +6,4 @@ regex
 scikit-learn
 requests
 SQLAlchemy==1.4.0
-mysqlclient
+PyMySQL
