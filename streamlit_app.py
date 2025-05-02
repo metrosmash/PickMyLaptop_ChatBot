@@ -47,11 +47,11 @@ try:
 
     # Check if the connection is successfully established
     if conn.is_connected():
-        print('Connected to MySQL database')
+        st.write('Connected to MySQL database')
 
 except mysql.connector.Error as e:
     # Print an error message if a connection error occurs
-    print(e)
+    st.write(e)
 
 finally:
     # Close the database connection in the 'finally' block to ensure it happens
