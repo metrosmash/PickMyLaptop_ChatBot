@@ -32,34 +32,35 @@ db_username = st.secrets["DB_username"]
 db_password = st.secrets["DB_password"]
 # host ="localhost:3306"
 # cursorclass=pymysql.cursors.DictCursor
-conn = mysql.connector.connect(
-    host ="localhost",
-    user = db_username,
-    password = db_password,
-    database = "laptop_datadb"
-    )
 
+# Initialize a variable to hold the database connection
+conn = None
+
+try:
+    # Attempt to establish a connection to the MySQL database
+    conn = mysql.connector.connect(
+            host ="localhost",
+            user = db_username,
+            password = db_password,
+            database = "laptop_datadb"
+                                   )
+
+    # Check if the connection is successfully established
+    if conn.is_connected():
+        print('Connected to MySQL database')
+
+except mysql.connector.Error as e:
+    # Print an error message if a connection error occurs
+    print(e)
+
+finally:
+    # Close the database connection in the 'finally' block to ensure it happens
+    if conn is not None and conn.is_connected():
+        conn.close()
+
+"""
 cursor = conn.cursor()
 
-create_table_query = """
-    CREATE TABLE IF NOT EXISTS Laptop (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    Brand TEXT,
-    Product_Description TEXT,
-    Screen_Size TEXT,
-    RAM FLOAT, 
-    Processor TEXT,
-    GPU TEXT,
-    GPU_Type TEXT,
-    Resolution TEXT,
-    Condition1 TEXT,
-    Price FLOAT,
-    SSD INTEGER,
-    HDD INTEGER
-)
-    """
-cursor.execute(create_table_query)
-conn.commit()
 
 
 api_key = st.secrets["API_key"]
@@ -86,5 +87,4 @@ else:
     # Create a Gemini API client.
     client = genai.Client(api_key=Gemini_api_key)
 
-
-
+"""
