@@ -4,6 +4,7 @@ from google.genai import types
 import streamlit as st
 import pymysql
 import pymysql.cursors
+import mysql.connector
 
 import pandas as pd
 import numpy as np
