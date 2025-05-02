@@ -30,14 +30,14 @@ st.write(
 db_username = st.secrets["DB_username"]
 db_password = st.secrets["DB_password"]
 # host ="localhost:3306"
-
-conn = pymysql.connect(
+# cursorclass=pymysql.cursors.DictCursor
+conn = mysql.connector.connect(
     host ="localhost",
     user = db_username,
     password = db_password,
-    database = "laptop_datadb",
-    cursorclass=pymysql.cursors.DictCursor
+    database = "laptop_datadb"
     )
+
 cursor = conn.cursor()
 
 create_table_query = """
@@ -62,16 +62,6 @@ conn.commit()
 
 
 api_key = st.secrets["API_key"]
-
-# Initialize connection.
-conn = st.connection('mysql', type='sql')
-
-# Perform query.
-df = conn.query('SELECT * from mytable;', ttl=600)
-
-# Print results.
-for row in df.itertuples():
-    st.write(f"{row.name} has a :{row.pet}:")
 
 def load_original_data():
     url = 'https://raw.githubusercontent.com/metrosmash/PickMyLaptop_ChatBot/refs/heads/main/Data/laptop_dataset.csv'

@@ -1,9 +1,0 @@
-streamlit
-google-genai==1.7.0
-matplotlib
-seaborn
-regex
-scikit-learn
-requests
-SQLAlchemy==1.4.0
-PyMySQL
