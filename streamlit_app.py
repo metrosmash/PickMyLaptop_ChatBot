@@ -73,15 +73,15 @@ except mysql.connector.Error as e:
 #     if conn is not None and conn.is_connected():
 #         conn.close()
 
-
+cursor = conn.cursor()
 # Insert the laptop_sales data into the sql database
 for _, row in data_f.iterrows():
-    conn.execute("INSERT INTO Laptop (Brand, Product_Description, Screen_Size, RAM, Processor, GPU, GPU_Type, Resolution, Condition1, Price, SSD, HDD) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    cursor.execute("INSERT INTO Laptop (Brand, Product_Description, Screen_Size, RAM, Processor, GPU, GPU_Type, Resolution, Condition1, Price, SSD, HDD) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                    (row['Brand'], row['Product_Description'], row['Screen_Size'], row['RAM'], row['Processor'], row['GPU'], row['GPU_Type'], row['Resolution'], row['Condition1'], row['Price'], row['SSD'], row['HDD']))
 
 conn.commit()
 
-conn.excecute("SELECT * FROM Laptop WHERE id = 3")
+cursor.execute("SELECT * FROM Laptop WHERE id = 3")
 """
 cursor = conn.cursor()
 
