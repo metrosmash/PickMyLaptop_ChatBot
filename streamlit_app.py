@@ -40,7 +40,7 @@ def load_original_data():
 
 
 data_f = load_original_data()
-st.write(data_f.head(1))
+st.write(data_f.head())
 
 
 # mysql database connection.
