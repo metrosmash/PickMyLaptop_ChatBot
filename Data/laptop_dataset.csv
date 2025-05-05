@@ -1,4 +1,4 @@
-Brand,Product_Description,Screen_Size,RAM,Processor,GPU,GPU_Type,Resolution,Condition,Price,SSD,HDD
+Brand,Product_Description,Screen_Size,RAM,Processor,GPU,GPU_Type,Resolution,Condition1,Price,SSD,HDD
 Lenovo,Lenovo ThinkPad 14” HD Laptop PC Computer Core i5 16GB RAM 256GB SSD Windows 10,14.0,16.0,Intel Core i5 7th Gen.,Intel HD Graphics 520,Integrated/On-Board Graphics,1920 x 1080,Very Good - Refurbished,189.99,256.0,0.0
 Dell,"Dell Latitude 15.6"" Laptop Intel Core i5 64GB RAM 2TB SSD Wi-Fi Windows 11 Pro",15.6,64.0,Intel Core i5 8th Gen.,Intel UHD Graphics 620,Integrated/On-Board Graphics,1920 x 1080,Very Good - Refurbished,349.99,2000.0,0.0
 HP,"NEW HP 15 Laptop. 15.6"" 1080p, i5-1135G7, 8GB RAM, 256GB SSD,Win 11 -15-dy2795wm",15.6,8.0,Intel Core i5 11th Gen.,Intel Iris Xe Graphics,Integrated/On-Board Graphics,1920 x 1080,New,369.95,256.0,0.0
