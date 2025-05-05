@@ -39,10 +39,10 @@ conn = None
 try:
     # Attempt to establish a connection to the MySQL database
     conn = mysql.connector.connect(
-            host ="localhost",
+            host ="db4free.net",
             user = db_username,
             password = db_password,
-            database = "laptop_datadb"
+            database = "metro_laptop"
                                    )
 
     # Check if the connection is successfully established
