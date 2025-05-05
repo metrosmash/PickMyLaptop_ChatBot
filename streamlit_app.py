@@ -75,10 +75,22 @@ except mysql.connector.Error as e:
 
 cursor = conn.cursor()
 # Insert the laptop_sales data into the sql database
-for _, row in data_f.iterrows():
-    cursor.execute("INSERT INTO Laptop (Brand, Product_Description, Screen_Size, RAM, Processor, GPU, GPU_Type, Resolution, Condition1, Price, SSD, HDD) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
-                   (row['Brand'], row['Product_Description'], row['Screen_Size'], row['RAM'], row['Processor'], row['GPU'], row['GPU_Type'], row['Resolution'], row['Condition1'], row['Price'], row['SSD'], row['HDD']))
+sql = """
+    INSERT INTO Laptop 
+    (Brand, Product_Description, Screen_Size, RAM, Processor, GPU, GPU_Type, Resolution, Condition1, Price, SSD, HDD)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+"""
 
+values = [
+    (
+        row['Brand'], row['Product_Description'], row['Screen_Size'], row['RAM'],
+        row['Processor'], row['GPU'], row['GPU_Type'], row['Resolution'],
+        row['Condition1'], row['Price'], row['SSD'], row['HDD']
+    )
+    for _, row in data_f.iterrows()
+]
+
+cursor.executemany(sql, values)
 conn.commit()
 
 cursor.execute("SELECT * FROM Laptop WHERE id = 3")
