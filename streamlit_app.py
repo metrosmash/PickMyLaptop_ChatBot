@@ -60,19 +60,24 @@ try:
             database="metro_laptop"
                                    )
 
+
     # Check if the connection is successfully established
     if conn.is_connected():
         st.write('Connected to MySQL database')
+        cursor = conn.cursor()
 
 except mysql.connector.Error as e:
     # Print an error message if a connection error occurs
     st.write(e)
 
 
-cursor = conn.cursor()
 
 query = " SELECT * FROM laptop_dataset LIMIT 5; "
-st.write(cursor.execute(query))
+
+results = cursor.fetchall()
+
+st.write(results)
+
 
 #This function is the only function for now the agent will be able to extract information fron the database with this function
 def execute_query(sql: str) -> list[list[str]]:
