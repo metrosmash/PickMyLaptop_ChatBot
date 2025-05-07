@@ -26,6 +26,7 @@ st.write(
 # Alternatively, you can store the API key in `./.streamlit/secrets.toml` and access it
 # via `st.secrets`, see https://docs.streamlit.io/develop/concepts/connections/secrets-management
 
+
 # loading the dataset
 def load_original_data():
     url = 'https://raw.githubusercontent.com/metrosmash/PickMyLaptop_ChatBot/refs/heads/main/Data/laptop_dataset.csv'
@@ -38,7 +39,7 @@ def load_original_data():
 
 
 data_f = load_original_data()
-st.write(data_f.head())
+# st.write(data_f.head())
 
 
 # mysql database connection.
@@ -70,7 +71,7 @@ except mysql.connector.Error as e:
 
 cursor = conn.cursor()
 
-st.write(cursor.execute("SELECT * FROM laptop_dataset WHERE 1 "))
+st.write(cursor.execute(" SELECT * FROM laptop_dataset LIMIT 5; "))
 
 
 #This function is the only function for now the agent will be able to extract information fron the database with this function
@@ -84,7 +85,7 @@ def execute_query(sql: str) -> list[list[str]]:
     return cursor.fetchall()
 
 
-st.write(execute_query("SELECT * FROM laptop_dataset WHERE 1 "))
+# st.write(execute_query("SELECT * FROM laptop_dataset WHERE 1 "))
 
 
 BOT_PROMPT = """You are a helpful, knowledgeable, and friendly Laptop Sales Assistant. 
