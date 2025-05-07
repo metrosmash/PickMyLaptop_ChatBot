@@ -71,8 +71,8 @@ except mysql.connector.Error as e:
 
 cursor = conn.cursor()
 
-st.write(cursor.execute(" SELECT * FROM laptop_dataset LIMIT 5; "))
-
+query = " SELECT * FROM laptop_dataset LIMIT 5; "
+st.write(cursor.execute(query))
 
 #This function is the only function for now the agent will be able to extract information fron the database with this function
 def execute_query(sql: str) -> list[list[str]]:
