@@ -67,7 +67,7 @@ try:
 
         cursor = conn.cursor()
 
-        query = " SELECT * FROM laptop_dataset LIMIT 5; "
+        query = " SELECT * FROM laptop_dataset; "
         cursor.execute(query)
         results = cursor.fetchall()
 
