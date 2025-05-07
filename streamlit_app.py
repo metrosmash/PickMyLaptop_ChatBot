@@ -62,6 +62,6 @@ def query_sql_database(query: str):
             conn.close()
 
 
-result = query_sql_database("SELECT * FROM laptop_dataset ;")
+result = query_sql_database("SELECT * FROM laptop_dataset LIMIT 5;")
 
 st.write(result)
