@@ -25,42 +25,43 @@ db_username = st.secrets["DB_username"]
 db_password = st.secrets["DB_password"]
 #Api_key = st.secrets["API_key"]
 
-# Initialize a variable to hold the database connection
-conn = None
 
-try:
-    # Attempt to establish a connection to the MySQL database
-    conn = mysql.connector.connect(
+def query_sql_database(query: str):
+    conn = None
+    try:
+        # Connect to MySQL
+        conn = mysql.connector.connect(
             host="db4free.net",
             user=db_username,
             password=db_password,
             database="metro_laptop"
-                                   )
+        )
 
-    # Check if the connection is successfully established
-    if conn.is_connected():
-        st.write('Connected to MySQL database')
+        if conn.is_connected():
+            cursor = conn.cursor()
+            cursor.execute(query)
+            results = cursor.fetchall()
 
-except mysql.connector.Error as e:
-    # Print an error message if a connection error occurs
-    st.write(e)
+            # Get column names
+            columns = [i[0] for i in cursor.description]
+
+            # Return as a DataFrame (or you could return list of dicts)
+            df = pd.DataFrame(results, columns=columns)
+
+            return df  # Let the AI agent process the DataFrame
+
+    except mysql.connector.Error as e:
+        # Return error message instead of raising
+        return {"error": str(e)}
+
+    finally:
+        # Always clean up
+        if 'cursor' in locals() and cursor:
+            cursor.close()
+        if 'conn' in locals() and conn.is_connected():
+            conn.close()
 
 
-cursor = conn.cursor()
-query = "SELECT * FROM laptop_dataset WHERE 1 "
-cursor.execute(query)
-results = cursor.fetchall()
-st.write(results)
+result = query_sql_database("SELECT * FROM laptop_dataset ;")
 
-#This function is the only function for now the agent will be able to extract information fron the database with this function
-def execute_query(sql: str) -> list[list[str]]:
-    """Execute an SQL statement, returning the results."""
-    print(f' - DB CALL: execute_query({sql})')
-
-    cursor = conn.cursor()
-
-    cursor.execute(sql)
-    return cursor.fetchall()
-
-
-st.write(execute_query("SELECT * FROM laptop_dataset WHERE 1 "))
+st.write(result)
