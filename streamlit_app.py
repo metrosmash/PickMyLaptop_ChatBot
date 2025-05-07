@@ -70,7 +70,7 @@ except mysql.connector.Error as e:
 
 cursor = conn.cursor()
 
-st.write (cursor.execute("SELECT * FROM Laptop WHERE RAM = 4"))
+st.write(cursor.execute("SELECT * FROM laptop_dataset WHERE 1 "))
 
 
 #This function is the only function for now the agent will be able to extract information fron the database with this function
@@ -84,7 +84,7 @@ def execute_query(sql: str) -> list[list[str]]:
     return cursor.fetchall()
 
 
-execute_query("SELECT * FROM laptop_dataset")
+st.write(execute_query("SELECT * FROM laptop_dataset WHERE 1 "))
 
 
 BOT_PROMPT = """You are a helpful, knowledgeable, and friendly Laptop Sales Assistant. 
@@ -160,3 +160,4 @@ Both are good picks—do you have a preferred budget range?
 With that info, I can recommend something that fits you perfectly.
 """
 
+# Setting up the Chat interface
