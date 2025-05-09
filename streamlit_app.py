@@ -19,7 +19,12 @@ from io import StringIO
 
 # Show title and description.
 st.title("PickMyLaptop_Chatbot")
-st.write("this is the test_app for the main_streamlit app (having problems running it locally )")
+
+st.write(
+    "This is a simple chatbot that uses Gemini flash 2.5 model to help users pick their preferred laptop. "
+    "To use this app, you need to provide a Gemini API key, which you can get [here](https://ai.google.dev/gemini-api/docs/api-key). "
+    "You can also learn how to build this app step by step by [following our tutorial](https://docs.streamlit.io/develop/tutorials/llms/build-conversational-apps)."
+)
 
 
 
@@ -42,6 +47,7 @@ def query_sql_database(query: str):
             database="metro_laptop"
         )
 
+
         if conn.is_connected():
             cursor = conn.cursor()
             cursor.execute(query)
@@ -50,14 +56,17 @@ def query_sql_database(query: str):
             # Get column names
             columns = [i[0] for i in cursor.description]
 
+
             # Return as a DataFrame (or you could return list of dicts)
             df = pd.DataFrame(results, columns=columns)
+
 
             return df  # Let the AI agent process the DataFrame
 
     except mysql.connector.Error as e:
         # Return error message instead of raising
         return {"error": str(e)}
+
 
     finally:
         # Always clean up
@@ -68,7 +77,9 @@ def query_sql_database(query: str):
 
 
 
+
 #result = query_sql_database("SELECT * FROM laptop_dataset LIMIT 5;")
+
 
 #st.write(result)
 
