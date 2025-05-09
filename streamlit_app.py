@@ -186,11 +186,14 @@ if prompt := st.chat_input("What can i do for you - "):
         st.markdown(prompt)
     # Add user message to chat history
     st.session_state.messages.append({"role": "user", "content": prompt})
+if prompt is not None:
+    response = chat.send_message(prompt)
+    # Display assistant response in chat message container
+    with st.chat_message("assistant"):
+        st.markdown(response.text)
+    # Add assistant response to chat history
+    st.session_state.messages.append({"role": "assistant", "content": response})
 
-response = chat.send_message(prompt)
-# Display assistant response in chat message container
-with st.chat_message("assistant"):
-    st.markdown(response.text)
-# Add assistant response to chat history
-st.session_state.messages.append({"role": "assistant", "content": response})
+else:
+    st.write("Please chat the Bot")
 
