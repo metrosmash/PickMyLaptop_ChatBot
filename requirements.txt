@@ -8,3 +8,4 @@ requests
 SQLAlchemy==1.4.0
 PyMySQL
 mysql-connector-python
+pandas

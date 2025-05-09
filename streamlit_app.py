@@ -1,32 +1,25 @@
-
 from google import genai
 from google.genai import types
 import streamlit as st
-import pymysql
-import pymysql.cursors
 import mysql.connector
+import pandas as pd
 import random
 import time
 import os
 
-import pandas as pd
-
-
-
 import requests
 from io import StringIO
-
 
 # Show title and description.
 st.title("PickMyLaptop_Chatbot")
 
 st.write(
     "This is a simple chatbot that uses Gemini flash 2.5 model to help users pick their preferred laptop. "
-    "To use this app, you need to provide a Gemini API key, which you can get [here](https://ai.google.dev/gemini-api/docs/api-key). "
-    "You can also learn how to build this app step by step by [following our tutorial](https://docs.streamlit.io/develop/tutorials/llms/build-conversational-apps)."
+    "To use this app, you need to provide a Gemini API key, which you can get [here]("
+    "https://ai.google.dev/gemini-api/docs/api-key)."
+    "You can also learn how to build this app step by step by [following our tutorial]("
+    "https://docs.streamlit.io/develop/tutorials/llms/build-conversational-apps)."
 )
-
-
 
 # .streamlit/secrets.toml
 # Retrieve credentials from Streamlit secrets
@@ -47,7 +40,6 @@ def query_sql_database(query: str):
             database="metro_laptop"
         )
 
-
         if conn.is_connected():
             cursor = conn.cursor()
             cursor.execute(query)
@@ -56,10 +48,8 @@ def query_sql_database(query: str):
             # Get column names
             columns = [i[0] for i in cursor.description]
 
-
             # Return as a DataFrame (or you could return list of dicts)
             df = pd.DataFrame(results, columns=columns)
-
 
             return df  # Let the AI agent process the DataFrame
 
@@ -76,21 +66,17 @@ def query_sql_database(query: str):
             conn.close()
 
 
-
-
-#result = query_sql_database("SELECT * FROM laptop_dataset LIMIT 5;")
-
-
-#st.write(result)
+# result = query_sql_database("SELECT * FROM laptop_dataset LIMIT 5;")
+# st.write(result)
 
 # Setting the Bot prompt
 
 BOT_PROMPT = """You are a helpful, knowledgeable, and friendly Laptop Sales Assistant. 
 Your goal is to help users find the best laptops based on their needs, preferences, and budget.
 
-You have access to an SQL database containing laptop specifications, prices, and descriptions. 
-Use this information to give accurate, helpful recommendations.
-Always ask clarifying questions if the user's request is vague or missing important details (e.g., budget, intended use, preferred brands, etc.).
+You have access to an SQL database containing laptop specifications, prices, and descriptions. Use this information 
+to give accurate, helpful recommendations. Always ask clarifying questions if the user's request is vague or missing 
+important details (e.g., budget, intended use, preferred brands, etc.).
 
 Provide concise, clear advice that balances performance and value for money. 
 If multiple laptops match the request, suggest the top 2–3 options with brief explanations.
@@ -141,7 +127,8 @@ Assistant: Sure! To help you better, could you tell me a bit more about:
 
     4.Operating System: Do you have a preferred operating system (e.g., Windows, macOS, ChromeOS)?
 
-    5.Features: Are there any specific features that are important to you (e.g., long battery life, touchscreen, lots of storage)?
+    5.Features: Are there any specific features that are important to you (e.g., long battery life, touchscreen, 
+    lots of storage)?
 
 Example 3: Specific Requirement
 
@@ -157,7 +144,6 @@ Both are good picks—do you have a preferred budget range?
 
 With that info, I can recommend something that fits you perfectly.
 """
-
 
 # result = query_sql_database("SELECT * FROM laptop_dataset LIMIT 5;")
 
@@ -175,8 +161,8 @@ client = genai.Client(api_key=Gemini_Api_key)
 chat = client.chats.create(
     model=model_name,
     config=types.GenerateContentConfig(
-        tools=assistant_function ,
-        system_instruction= BOT_PROMPT
+        tools=assistant_function,
+        system_instruction=BOT_PROMPT
     ),
 )
 
@@ -208,4 +194,3 @@ if prompt != None:
 
 else:
     st.write("Please chat the Bot")
-
