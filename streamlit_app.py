@@ -7,6 +7,7 @@ import pymysql.cursors
 import mysql.connector
 import random
 import time
+import os
 
 import pandas as pd
 
@@ -146,57 +147,50 @@ With that info, I can recommend something that fits you perfectly.
 """
 
 
-#result = query_sql_database("SELECT * FROM laptop_dataset LIMIT 5;")
+# result = query_sql_database("SELECT * FROM laptop_dataset LIMIT 5;")
 
-#st.write(result)
+# st.write(result)
 
-# Set OpenAI API key from Streamlit secrets
+
+assistant_function = [
+    query_sql_database
+]
+
+model_name = "gemini-2.0-flash"
+
 client = genai.Client(api_key=Gemini_Api_key)
 
-# Set a default model
-if "Gemini_model" not in st.session_state:
-    st.session_state["Gemini_model"] = "gemini-2.0-flash"
+chat = client.chats.create(
+    model=model_name,
+    config=types.GenerateContentConfig(
+        tools=assistant_function ,
+        system_instruction= BOT_PROMPT
+    ),
+)
+
+st.write("👋 Welcome to Laptop assistant Bot!")
 
 # Initialize chat history
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Accept user input
-if prompt := st.chat_input("What can i help you with- "):
+# Display chat messages from history on app rerun
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
+# React to user input
+if prompt := st.chat_input("What can i do for you - "):
     # Display user message in chat message container
     with st.chat_message("user"):
         st.markdown(prompt)
     # Add user message to chat history
     st.session_state.messages.append({"role": "user", "content": prompt})
 
-    # Display assistant response in chat message container
-    with st.chat_message("assistant"):
-        stream = client.chat.create(
-            model=st.session_state["Gemini_model"],
-            messages=[
-                {"role": m["role"], "content": m["content"]}
-                for m in st.session_state.messages
-            ],
-            stream=True,
-        )
-        response = st.write_stream(stream)
-    st.session_state.messages.append({"role": "assistant", "content": response})
-
-
-
-#using Automatic function calling for the bot
-assistant_system = [
-    execute_query
-]
-model_name = "gemini-2.0-flash"
-
-client = genai.Client(api_key=GOOGLE_API_KEY)
-
-chat = client.chats.create(
-    model=model_name,
-    config=types.GenerateContentConfig(
-        tools=assistant_system ,
-        system_instruction= BOT_PROMPT
-    ),
-)
+response = chat.send_message(prompt)
+# Display assistant response in chat message container
+with st.chat_message("assistant"):
+    st.markdown(response)
+# Add assistant response to chat history
+st.session_state.messages.append({"role": "assistant", "content": response})
 
