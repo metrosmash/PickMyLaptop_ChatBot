@@ -1,6 +1,6 @@
-# 💬 Chatbot template
+# 💬 PickMyLaptop_Chatbot
 
-A simple Streamlit app that shows how to build a chatbot using OpenAI's GPT-3.5.
+AN App that uses a AI Agent to help users pick their best choice of laptops.
 
 [![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://chatbot-template.streamlit.app/)
 
