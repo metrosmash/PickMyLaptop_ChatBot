@@ -160,6 +160,7 @@ chat_history = st.session_state.messages
 model_name = "gemini-2.0-flash"
 
 client = genai.Client(api_key=Gemini_Api_key)
+st.write(type(chat_history))
 
 chat = client.chats.create(
     model=model_name,
