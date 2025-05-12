@@ -146,13 +146,17 @@ With that info, I can recommend something that fits you perfectly.
 
 # result = query_sql_database("SELECT * FROM laptop_dataset LIMIT 5;")
 
-# st.write(result)
+st.write("👋 Welcome to Laptop assistant Bot!")
 
+# Initialize chat history
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
 assistant_function = [
     query_sql_database
 ]
 
+chat_history = st.session_state.messages
 model_name = "gemini-2.0-flash"
 
 client = genai.Client(api_key=Gemini_Api_key)
@@ -161,15 +165,10 @@ chat = client.chats.create(
     model=model_name,
     config=types.GenerateContentConfig(
         tools=assistant_function,
-        system_instruction=BOT_PROMPT
+        system_instruction=BOT_PROMPT, chat_history
     ),
 )
 
-st.write("👋 Welcome to Laptop assistant Bot!")
-
-# Initialize chat history
-if "messages" not in st.session_state:
-    st.session_state.messages = []
 
 # Display chat messages from history on app rerun
 for message in st.session_state.messages:
@@ -184,7 +183,6 @@ if prompt := st.chat_input("What can i do for you - "):
     # Add user message to chat history
     st.session_state.messages.append({"role": "user", "content": prompt})
 
-exit_string = "exit"
 
 if prompt := prompt:
     response = chat.send_message(prompt)
