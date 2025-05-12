@@ -57,7 +57,6 @@ def query_sql_database(query: str):
         # Return error message instead of raising
         return {"error": str(e)}
 
-
     finally:
         # Always clean up
         if 'cursor' in locals() and cursor:
@@ -184,13 +183,21 @@ if prompt := st.chat_input("What can i do for you - "):
         st.markdown(prompt)
     # Add user message to chat history
     st.session_state.messages.append({"role": "user", "content": prompt})
-if prompt != None:
-    response = chat.send_message(prompt)
-    # Display assistant response in chat message container
-    with st.chat_message("assistant"):
-        st.markdown(response.text)
-    # Add assistant response to chat history
-    st.session_state.messages.append({"role": "assistant", "content": response.text})
 
-else:
-    st.write("Please chat the Bot")
+exit_string = "exit"
+while True:
+    if prompt != None :
+        response = chat.send_message(prompt)
+        # Display assistant response in chat message container
+        with st.chat_message("assistant"):
+            st.markdown(response.text)
+        # Add assistant response to chat history
+        st.session_state.messages.append({"role": "assistant", "content": response.text})
+
+    else:
+        st.write("Please chat the Bot")
+
+
+
+# Working on the conversational logs of the AI Agent
+
