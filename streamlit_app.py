@@ -193,9 +193,11 @@ while True:
             st.markdown(response.text)
         # Add assistant response to chat history
         st.session_state.messages.append({"role": "assistant", "content": response.text})
+    elif prompt.lower() == 'exit':
+        break
 
     else:
-        st.write("Please chat the Bot")
+        st.write("Please chat the Bot type (exit) to end chat session")
 
 
 
