@@ -142,6 +142,7 @@ Assistant: Here are two laptops that match those specs:
 Both are good picks—do you have a preferred budget range?
 
 With that info, I can recommend something that fits you perfectly.
+here is the prevous conversation for your memory
 """
 
 # result = query_sql_database("SELECT * FROM laptop_dataset LIMIT 5;")
@@ -160,13 +161,15 @@ chat_history = st.session_state.messages
 model_name = "gemini-2.0-flash"
 
 client = genai.Client(api_key=Gemini_Api_key)
-st.write(type(chat_history))
+# This creates a readable plain-text version of the entire conversation
+context = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state.messages])
 
+bot_prompt = BOT_PROMPT + context
 chat = client.chats.create(
     model=model_name,
     config=types.GenerateContentConfig(
         tools=assistant_function,
-        system_instruction=BOT_PROMPT
+        system_instruction=bot_prompt
     ),
 )
 
