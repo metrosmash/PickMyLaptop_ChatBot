@@ -185,19 +185,17 @@ if prompt := st.chat_input("What can i do for you - "):
     st.session_state.messages.append({"role": "user", "content": prompt})
 
 exit_string = "exit"
-while True:
-    if prompt != None :
-        response = chat.send_message(prompt)
-        # Display assistant response in chat message container
-        with st.chat_message("assistant"):
-            st.markdown(response.text)
-        # Add assistant response to chat history
-        st.session_state.messages.append({"role": "assistant", "content": response.text})
-    elif prompt == exit_string.lower():
-        break
 
-    else:
-        st.write("Please chat the Bot type (exit) to end chat session")
+if prompt := prompt:
+    response = chat.send_message(prompt)
+    # Display assistant response in chat message container
+    with st.chat_message("assistant"):
+        st.markdown(response.text)
+    # Add assistant response to chat history
+    st.session_state.messages.append({"role": "assistant", "content": response.text})
+
+else:
+    st.write("Please chat the Bot")
 
 
 
