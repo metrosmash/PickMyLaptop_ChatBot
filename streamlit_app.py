@@ -194,8 +194,6 @@ if prompt := prompt:
     # Add assistant response to chat history
     st.session_state.messages.append({"role": "assistant", "content": response.text})
 
-else:
-    st.write("Please chat the Bot")
 
 
 
