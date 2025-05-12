@@ -166,7 +166,7 @@ chat = client.chats.create(
     model=model_name,
     config=types.GenerateContentConfig(
         tools=assistant_function,
-        system_instruction=BOT_PROMPT, chat_history
+        system_instruction=BOT_PROMPT
     ),
 )
 
