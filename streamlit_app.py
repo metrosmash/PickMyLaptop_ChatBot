@@ -86,6 +86,8 @@ If no match is found, kindly inform the user and suggest alternatives.
 
 Respond in a warm and helpful tone, like a tech-savvy friend who wants the best for the user
 Use the function "query_sql_database" to issue an SQL SELECT query 
+Note: use the function "get_conversation_memory" to get the memory of previous conversations. 
+use the "get_conversation_memory" function always
 The sql table is called "laptop_dataset"
 it contains
     Brand - "this is the brand of the laptop",
@@ -143,7 +145,6 @@ Assistant: Here are two laptops that match those specs:
 Both are good picks—do you have a preferred budget range?
 
 With that info, I can recommend something that fits you perfectly.
-here is the prevous conversation for your memory
 """
 
 # result = query_sql_database("SELECT * FROM laptop_dataset LIMIT 5;")
@@ -168,7 +169,7 @@ def get_conversation_memory():
 
 
 assistant_function = [
-    query_sql_database
+    query_sql_database, get_conversation_memory
 ]
 
 model_name = "gemini-2.0-flash"
@@ -204,8 +205,6 @@ if prompt := st.chat_input("What can i do for you - "):
         st.markdown(response.text)
     # Add assistant response to chat history
     st.session_state.messages.append({"role": "assistant", "content": response.text})
-
-st.write(get_conversation_memory())
 
 # Working on the conversational logs of the AI Agent
 
