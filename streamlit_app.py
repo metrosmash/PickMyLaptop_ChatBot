@@ -204,7 +204,8 @@ if prompt := st.chat_input("What can i do for you - "):
         st.markdown(response.text)
     # Add assistant response to chat history
     st.session_state.messages.append({"role": "assistant", "content": response.text})
-    st.write(get_conversation_memory())
+
+st.write(get_conversation_memory())
 
 # Working on the conversational logs of the AI Agent
 
