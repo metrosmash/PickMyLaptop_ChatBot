@@ -78,7 +78,7 @@ st.title("PickMyLaptop_Chatbot V.0")
 #     "You can also learn how to build this app step by step by [following our tutorial]("
 #     "https://docs.streamlit.io/develop/tutorials/llms/build-conversational-apps)."
 # )
-st.write("👋 Welcome to Laptop assistant Bot!"
+st.write("👋 Welcome to Laptop assistant Bot! /n"
          "This is a simple chatbot that uses Gemini flash 2.5 model to help users pick their preferred laptop. "
          )
 
