@@ -65,6 +65,7 @@ def query_sql_database(query: str):
             conn.close()
 
 
+
 # result = query_sql_database("SELECT * FROM laptop_dataset LIMIT 5;")
 # st.write(result)
 
@@ -157,6 +158,15 @@ if "Gemini_model" not in st.session_state:
     st.session_state["Gemini_model"] = "gemini-2.0-flash"
 
 
+def get_conversation_memory():
+    """
+    Returns previous user-agent message pairs as formatted string.
+    """
+
+    context = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state.messages])
+    return context
+
+
 assistant_function = [
     query_sql_database
 ]
@@ -181,21 +191,6 @@ for message in st.session_state.messages:
 
 # React to user input
 # Option 1
-# if prompt := st.chat_input("What can i do for you - "):
-#     # Add user message to chat history
-#     st.session_state.messages.append({"role": "user", "content": prompt})
-#     # Display user message in chat message container
-#     with st.chat_message("user"):
-#         st.markdown(prompt)
-#
-#     response = chat.send_message(prompt)
-#     # Display assistant response in chat message container
-#     with st.chat_message("assistant"):
-#         st.markdown(response.text)
-#     # Add assistant response to chat history
-#     st.session_state.messages.append({"role": "assistant", "content": response.text})
-
-# Option 2
 if prompt := st.chat_input("What can i do for you - "):
     # Add user message to chat history
     st.session_state.messages.append({"role": "user", "content": prompt})
@@ -203,22 +198,13 @@ if prompt := st.chat_input("What can i do for you - "):
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    with st.chat_message("assistant"):
-        stream = client.chats.create(
-            model=st.session_state["Gemini_model"],
-            config=types.GenerateContentConfig(
-            tools=assistant_function,
-            system_instruction=BOT_PROMPT
-            ),
-            stream=True,
-        )
-        response = st.write_stream(stream)
+    response = chat.send_message(prompt)
     # Display assistant response in chat message container
     with st.chat_message("assistant"):
         st.markdown(response.text)
     # Add assistant response to chat history
     st.session_state.messages.append({"role": "assistant", "content": response.text})
-
+    st.write(get_conversation_memory())
 
 # Working on the conversational logs of the AI Agent
 
