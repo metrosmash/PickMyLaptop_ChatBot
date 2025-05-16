@@ -153,26 +153,26 @@ st.write("👋 Welcome to Laptop assistant Bot!")
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+if "Gemini_model" not in st.session_state:
+    st.session_state["Gemini_model"] = "gemini-2.0-flash"
+
+
 assistant_function = [
     query_sql_database
 ]
 
-chat_history = st.session_state.messages
 model_name = "gemini-2.0-flash"
 
 client = genai.Client(api_key=Gemini_Api_key)
-# This creates a readable plain-text version of the entire conversation
-context = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state.messages])
 
-bot_prompt = BOT_PROMPT + context
+
 chat = client.chats.create(
     model=model_name,
     config=types.GenerateContentConfig(
         tools=assistant_function,
-        system_instruction=bot_prompt
+        system_instruction=BOT_PROMPT
     ),
 )
-
 
 # Display chat messages from history on app rerun
 for message in st.session_state.messages:
@@ -181,14 +181,12 @@ for message in st.session_state.messages:
 
 # React to user input
 if prompt := st.chat_input("What can i do for you - "):
+    # Add user message to chat history
+    st.session_state.messages.append({"role": "user", "content": prompt})
     # Display user message in chat message container
     with st.chat_message("user"):
         st.markdown(prompt)
-    # Add user message to chat history
-    st.session_state.messages.append({"role": "user", "content": prompt})
-
-
-if prompt := prompt:
+        
     response = chat.send_message(prompt)
     # Display assistant response in chat message container
     with st.chat_message("assistant"):
