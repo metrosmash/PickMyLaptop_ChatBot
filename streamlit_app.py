@@ -180,21 +180,44 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
 # React to user input
+# Option 1
+# if prompt := st.chat_input("What can i do for you - "):
+#     # Add user message to chat history
+#     st.session_state.messages.append({"role": "user", "content": prompt})
+#     # Display user message in chat message container
+#     with st.chat_message("user"):
+#         st.markdown(prompt)
+#
+#     response = chat.send_message(prompt)
+#     # Display assistant response in chat message container
+#     with st.chat_message("assistant"):
+#         st.markdown(response.text)
+#     # Add assistant response to chat history
+#     st.session_state.messages.append({"role": "assistant", "content": response.text})
+
+# Option 2
 if prompt := st.chat_input("What can i do for you - "):
     # Add user message to chat history
     st.session_state.messages.append({"role": "user", "content": prompt})
     # Display user message in chat message container
     with st.chat_message("user"):
         st.markdown(prompt)
-        
-    response = chat.send_message(prompt)
+
+    with st.chat_message("assistant"):
+        stream = client.chats.create(
+            model=st.session_state["Gemini_model"],
+            config=types.GenerateContentConfig(
+            tools=assistant_function,
+            system_instruction=BOT_PROMPT
+            ),
+            stream=True,
+        )
+        response = st.write_stream(stream)
     # Display assistant response in chat message container
     with st.chat_message("assistant"):
         st.markdown(response.text)
     # Add assistant response to chat history
     st.session_state.messages.append({"role": "assistant", "content": response.text})
-
-
 
 
 # Working on the conversational logs of the AI Agent
