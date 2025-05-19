@@ -41,7 +41,7 @@ def query_sql_database(query: str):
 
             # Return as a DataFrame (or you could return list of dicts)
             df = pd.DataFrame(results, columns=columns)
-
+            df = df.to_json()
             return df  # Let the AI agent process the DataFrame
 
     except mysql.connector.Error as e:
