@@ -16,7 +16,7 @@ Use the function "query_sql_database" to issue an SQL SELECT query
 Note: use the function "get_conversation_memory" to get the memory of previous conversations.
 use the "get_conversation_memory" function always
 The sql table is called "laptop_dataset"
-it contains
+it contains the following columns
     Brand - "this is the brand of the laptop",
     Product_Description - "Basic description of the choosen laptop",
     Screen_Size - "the size of the laptop in inches(14,16)",
