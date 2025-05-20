@@ -36,7 +36,7 @@ def query_sql_database(query: str):
 
             # Return as a DataFrame (or you could return list of dicts)
             df = pd.DataFrame(results, columns=columns)
-            df = df.to_json(orient="records")
+            df = df.to_dict(orient="records")
             return df  # Let the AI agent process the DataFrame
 
 
