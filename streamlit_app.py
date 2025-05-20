@@ -32,12 +32,13 @@ def query_sql_database(query: str):
             results = cursor.fetchall()
 
             # Get column names
-            columns = [i[0] for i in cursor.description]
+            # columns = [i[0] for i in cursor.description]
 
             # Return as a DataFrame (or you could return list of dicts)
-            df = pd.DataFrame(results, columns=columns)
-            df = df.to_dict(orient="records")
-            return df  # Let the AI agent process the DataFrame
+            # df = pd.DataFrame(results, columns=columns)
+            # df = df.to_dict(orient="records")
+            # return df  # Let the AI agent process the DataFrame
+            return results
 
 
     except mysql.connector.Error as e:
