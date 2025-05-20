@@ -58,7 +58,7 @@ def query_sql_database(query: str):
 
 
 # Setting the Bot prompt
-with open("bot_prompt.txt", "r") as f:
+with open("Bot_prompt1.txt", "r") as f:
     BOT_PROMPT = f.read()
 
 
