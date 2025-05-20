@@ -23,7 +23,7 @@ it contains
     GPU - "The graphical processing unit being used by the laptop",
     GPU_Type - "The type of GPU being used by the laptop",
     Resolution - "The Resolution of the laptop ",
-    Condition - "The condition of the laptop at the time of sale (eg New,Used)",
+    Condition1 - "The condition of the laptop at the time of sale (eg New,Used)",
     Price - "The Price at which the laptop was sold ",
     SSD - "This is the storage of the laptop"
     HDD - "This is the storage of the laptop but its slower than its counterpart(SSD)"

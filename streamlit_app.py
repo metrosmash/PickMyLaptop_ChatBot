@@ -5,7 +5,6 @@ import streamlit as st
 import mysql.connector
 import pandas as pd
 
-
 # Config and Secrets
 # Retrieve credentials from Streamlit secrets
 
@@ -61,7 +60,6 @@ def query_sql_database(query: str):
 with open("Bot_prompt1.txt", "r") as f:
     BOT_PROMPT = f.read()
 
-
 # result = query_sql_database("SELECT * FROM laptop_dataset LIMIT 5;")
 
 # Streamlit UI
@@ -97,6 +95,8 @@ if "Gemini_model" not in st.session_state:
     st.session_state["Gemini_model"] = "gemini-2.0-flash"
 
 
+st.write(query_sql_database("SELECT * FROM `laptop_dataset` WHERE 8;"))
+
 # Memory Setup
 def get_conversation_memory():
     """
@@ -111,7 +111,6 @@ def get_conversation_memory():
 assistant_function = [
     query_sql_database, get_conversation_memory
 ]
-
 
 client = genai.Client(api_key=Gemini_Api_key)
 chat = client.chats.create(
@@ -143,6 +142,3 @@ if prompt := st.chat_input("What can i do for you - "):
         st.markdown(response.text)
     # Add assistant response to chat history
     st.session_state.messages.append({"role": "assistant", "content": response.text})
-
-
-
