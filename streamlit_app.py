@@ -4,6 +4,7 @@ from google.genai import types
 import streamlit as st
 import mysql.connector
 import pandas as pd
+from typing import List, Dict
 
 # Config and Secrets
 # Retrieve credentials from Streamlit secrets
@@ -14,7 +15,7 @@ Gemini_Api_key = st.secrets["API_key"]
 
 
 # DB & Tools
-def query_sql_database(query: str):
+def query_laptops(brand: str, max_price: float, min_ram: int) -> List[Dict]:
     conn = None
     try:
         # Connect to MySQL
@@ -27,18 +28,24 @@ def query_sql_database(query: str):
 
         if conn.is_connected():
             cursor = conn.cursor()
-            cursor.execute(query)
-            results = cursor.fetchall()
 
-            # Get column names
-            # columns = [i[0] for i in cursor.description]
+            # SQL query with parameterized inputs to prevent injection
+            query = """
+                            SELECT brand, model, price, ram, processor
+                            FROM laptops
+                            WHERE brand = %s AND price <= %s AND CAST(REPLACE(ram, 'GB', '') AS UNSIGNED) >= %s
+                            ORDER BY price ASC
+                        """
+            cursor.execute(query, (brand, max_price, min_ram))
 
-            # Return as a DataFrame (or you could return list of dicts)
-            # df = pd.DataFrame(results, columns=columns)
-            # df = df.to_dict(orient="records")
-            # return df  # Let the AI agent process the DataFrame
-            return results
+            # Get column names and rows
+            columns = [desc[0] for desc in cursor.description]
+            rows = cursor.fetchall()
 
+            # Convert to list of dicts
+            result = [dict(zip(columns, row)) for row in rows]
+
+            return result
 
     except mysql.connector.Error as e:
         # Return error message instead of raising
@@ -52,6 +59,7 @@ def query_sql_database(query: str):
             conn.close()
 
 
+## Objective is to write a function that uses the query function to search for a laptop
 # result = query_sql_database("SELECT * FROM laptop_dataset LIMIT 5;")
 # st.write(result)
 
@@ -96,6 +104,7 @@ if "Gemini_model" not in st.session_state:
 
 
 st.write(query_sql_database("SELECT * FROM `laptop_dataset` WHERE 8;"))
+
 
 # Memory Setup
 def get_conversation_memory():
