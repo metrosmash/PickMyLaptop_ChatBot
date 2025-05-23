@@ -15,7 +15,7 @@ Gemini_Api_key = st.secrets["API_key"]
 
 
 # DB & Tools
-def query_laptops(brand: str, max_price: float, min_ram: int) -> List[Dict]:
+def query_sql_database(query: str):
     conn = None
     try:
         # Connect to MySQL
@@ -28,24 +28,17 @@ def query_laptops(brand: str, max_price: float, min_ram: int) -> List[Dict]:
 
         if conn.is_connected():
             cursor = conn.cursor()
+            cursor.execute(query)
+            results = cursor.fetchall()
 
-            # SQL query with parameterized inputs to prevent injection
-            query = """
-                            SELECT brand, model, price, ram, processor
-                            FROM laptops
-                            WHERE brand = %s AND price <= %s AND CAST(REPLACE(ram, 'GB', '') AS UNSIGNED) >= %s
-                            ORDER BY price ASC
-                        """
-            cursor.execute(query, (brand, max_price, min_ram))
+            # Get column names
+            # columns = [i[0] for i in cursor.description]
 
-            # Get column names and rows
-            columns = [desc[0] for desc in cursor.description]
-            rows = cursor.fetchall()
+            # Return as a DataFrame (or you could return list of dicts)
+            # df = pd.DataFrame(results, columns=columns)
 
-            # Convert to list of dicts
-            result = [dict(zip(columns, row)) for row in rows]
-
-            return result
+            # return df  # Let the AI agent process the DataFrame
+            return results
 
     except mysql.connector.Error as e:
         # Return error message instead of raising
