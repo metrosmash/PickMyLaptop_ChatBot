@@ -52,7 +52,7 @@ def query_sql_database(query: str):
             conn.close()
 
 
-## Objective is to write a function that uses the query function to search for a laptop
+
 # result = query_sql_database("SELECT * FROM laptop_dataset LIMIT 5;")
 # st.write(result)
 
@@ -94,9 +94,6 @@ if "messages" not in st.session_state:
 
 if "Gemini_model" not in st.session_state:
     st.session_state["Gemini_model"] = "gemini-2.0-flash"
-
-
-st.write(query_sql_database("SELECT * FROM `laptop_dataset` WHERE 8;"))
 
 
 # Memory Setup
