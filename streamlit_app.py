@@ -18,7 +18,6 @@ Gemini_Api_key = st.secrets["API_key"]
 
 
 
-
 # Streamlit UI
 streamlit_ui()
 
