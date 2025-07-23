@@ -91,4 +91,4 @@ def gemini_agent_setup():
         ),
     )
 
-    return client
+    return client, chat
