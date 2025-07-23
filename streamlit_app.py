@@ -3,29 +3,19 @@ from google import genai
 from google.genai import types
 import streamlit as st
 import mysql.connector
-from Backend import query_sql_database, init_chat_history, get_conversation_memory, gemini_agent_setup
+from Backend import init_chat_history, gemini_agent_setup
 from frontend import streamlit_ui
 import pandas as pd
 from typing import List, Dict
 
-# Config and Secrets
-# Retrieve credentials from Streamlit secrets
-
-db_username = st.secrets["DB_username"]
-db_password = st.secrets["DB_password"]
-Gemini_Api_key = st.secrets["API_key"]
-
-
-
-
-# Streamlit UI
+#Streamlit UI
 streamlit_ui()
 
 # Initialize chat history
 init_chat_history()
 
 # Gemini Agent Setup
-gemini_agent_setup()
+chat = gemini_agent_setup()
 
 # Chat Logic
 

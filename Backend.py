@@ -5,6 +5,8 @@ import streamlit as st
 import mysql.connector
 
 
+# Config and Secrets
+# Retrieve credentials from Streamlit secrets
 db_username = st.secrets["DB_username"]
 db_password = st.secrets["DB_password"]
 Gemini_Api_key = st.secrets["API_key"]
