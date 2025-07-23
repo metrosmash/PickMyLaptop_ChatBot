@@ -48,6 +48,47 @@ def query_sql_database(query: str):
             conn.close()
 
 
-
 # result = query_sql_database("SELECT * FROM laptop_dataset LIMIT 5;")
 # st.write(result)
+
+
+# Initialize chat history
+def init_chat_history():
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+
+    if "Gemini_model" not in st.session_state:
+        st.session_state["Gemini_model"] = "gemini-2.0-flash"
+
+
+# Memory Setup
+def get_conversation_memory():
+    """
+    Returns previous user-agent message pairs as formatted string.
+    """
+
+    context = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state.messages])
+    return context
+
+
+# Setting the Bot prompt
+with open("Bot_prompt1.txt", "r") as f:
+    BOT_PROMPT = f.read()
+
+
+# Gemini Agent Setup
+def gemini_agent_setup():
+    assistant_function = [
+        query_sql_database, get_conversation_memory
+    ]
+
+    client = genai.Client(api_key=Gemini_Api_key)
+    chat = client.chats.create(
+        model=st.session_state["Gemini_model"],
+        config=types.GenerateContentConfig(
+            tools=assistant_function,
+            system_instruction=BOT_PROMPT
+        ),
+    )
+
+    return client

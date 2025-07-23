@@ -3,7 +3,7 @@ from google import genai
 from google.genai import types
 import streamlit as st
 import mysql.connector
-from Backend import query_sql_database
+from Backend import query_sql_database, init_chat_history, get_conversation_memory, gemini_agent_setup
 from frontend import streamlit_ui
 import pandas as pd
 from typing import List, Dict
@@ -17,45 +17,16 @@ Gemini_Api_key = st.secrets["API_key"]
 
 
 
-# Setting the Bot prompt
-with open("Bot_prompt1.txt", "r") as f:
-    BOT_PROMPT = f.read()
 
 
 # Streamlit UI
 streamlit_ui()
 
 # Initialize chat history
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-
-if "Gemini_model" not in st.session_state:
-    st.session_state["Gemini_model"] = "gemini-2.0-flash"
-
-
-# Memory Setup
-def get_conversation_memory():
-    """
-    Returns previous user-agent message pairs as formatted string.
-    """
-
-    context = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state.messages])
-    return context
-
+init_chat_history()
 
 # Gemini Agent Setup
-assistant_function = [
-    query_sql_database, get_conversation_memory
-]
-
-client = genai.Client(api_key=Gemini_Api_key)
-chat = client.chats.create(
-    model=st.session_state["Gemini_model"],
-    config=types.GenerateContentConfig(
-        tools=assistant_function,
-        system_instruction=BOT_PROMPT
-    ),
-)
+gemini_agent_setup()
 
 # Chat Logic
 
