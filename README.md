@@ -1,5 +1,7 @@
 # 💬 PickMyLaptop_Chatbot
 
+its Generic for now but i will change it later 
+
 AN App that uses a AI Agent to help users pick their best choice of laptops.
 
 [![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://chatbot-template.streamlit.app/)
