@@ -9,4 +9,6 @@ SQLAlchemy==1.4.0
 PyMySQL
 mysql-connector-python
 pandas
-langchain
+langgraph==0.3.21
+langchain-google-genai==2.1.2
+langgraph-prebuilt==0.1.7

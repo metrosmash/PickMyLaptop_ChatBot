@@ -8,7 +8,7 @@ import mysql.connector
 def streamlit_ui():
 
     # Show title and description.
-    st.title("💻 PickMyLaptop_Chatbot V.0")
+    st.title("💻 PickMyLaptop_Chatbot V.0.5")
     st.write("👋 Welcome to your smart laptop shopping assistant!")
 
     st.markdown("""Looking for the perfect laptop but not sure where to start? You're in the right place! 

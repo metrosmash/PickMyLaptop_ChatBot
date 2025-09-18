@@ -2,7 +2,7 @@
 
 AN App that uses a AI Agent to help users pick their best choice of laptops.
 
-[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://chatbot-template.streamlit.app/)
+[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://chatbot-uc6zpm9iv3.streamlit.app/)
 
 ### How to run it on your own machine
 
