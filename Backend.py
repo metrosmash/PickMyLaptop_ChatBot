@@ -74,7 +74,7 @@ def get_conversation_memory():
 
 
 # Setting the Bot prompt
-with open("Bot_prompt1.txt", "r") as f:
+with open("Bot_promptv1.txt", "r") as f:
     BOT_PROMPT = f.read()
 
 

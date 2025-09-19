@@ -23,11 +23,3 @@ def streamlit_ui():
     
     Start by telling the chatbot what you're looking for – and let the assistant do the rest!
     """)
-
-# st.write(
-#     "This is a simple chatbot that uses Gemini flash 2.5 model to help users pick their preferred laptop. "
-#     "To use this app, you need to provide a Gemini API key, which you can get [here]("
-#     "https://ai.google.dev/gemini-api/docs/api-key)."
-#     "You can also learn how to build this app step by step by [following our tutorial]("
-#     "https://docs.streamlit.io/develop/tutorials/llms/build-conversational-apps)."
-# )
