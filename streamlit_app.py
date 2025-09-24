@@ -3,38 +3,51 @@ from google import genai
 from google.genai import types
 import streamlit as st
 import mysql.connector
-from Backend import init_chat_history, gemini_agent_setup
+#from Backend import init_chat_history, gemini_agent_setup
 from frontend import streamlit_ui
 import pandas as pd
 from typing import List, Dict
 
+from Backend import init_state, run_agent
+
+
 #Streamlit UI
 streamlit_ui()
 
-# Initialize chat history
-init_chat_history()
 
-# Gemini Agent Setup
-chat = gemini_agent_setup()
+# --- Initialize agent memory ---
+if "agent_state" not in st.session_state:
+    st.session_state.agent_state = {"messages": []}
 
-# Chat Logic
+# # --- Initialize chat history ---
+# if "messages" not in st.session_state:
+#     st.session_state.messages = []
 
-# Display chat messages from history on app rerun
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
 
-# React to user input
-if prompt := st.chat_input("What can i do for you - "):
-    # Add user message to chat history
+# Display past messages
+for msg in st.session_state.agent_state["messages"]:
+    role = "user" if msg.type == "human" else "assistant"
+    with st.chat_message(role):
+        st.markdown(msg.content)
+
+# Input box
+if prompt := st.chat_input("Say something..."):
+    # User message
     st.session_state.messages.append({"role": "user", "content": prompt})
-    # Display user message in chat message container
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    response = chat.send_message(prompt)
-    # Display assistant response in chat message container
+    # Run agent backend
+    result = run_agent(st.session_state.agent_state, prompt)
+    response = result["output"]
+
+    # Update agent state (memory)
+    st.session_state.agent_state["messages"] = result["messages"]
+
+    # Assistant message
+    st.session_state.messages.append({"role": "assistant", "content": response})
     with st.chat_message("assistant"):
-        st.markdown(response.text)
-    # Add assistant response to chat history
-    st.session_state.messages.append({"role": "assistant", "content": response.text})
+        st.markdown(response)
+
+
+## i have to rework the whole relationship between the add messages and the ai agent 

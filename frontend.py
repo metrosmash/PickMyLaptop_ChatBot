@@ -23,3 +23,6 @@ def streamlit_ui():
     
     Start by telling the chatbot what you're looking for – and let the assistant do the rest!
     """)
+
+    with st.expander("<DEBUG STATE>"):
+        st.write(st.session_state)
