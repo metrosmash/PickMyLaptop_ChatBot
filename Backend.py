@@ -64,8 +64,7 @@ class ChatState(TypedDict):
     # them.
     messages: Annotated[list, add_messages]
 
-    # The customer's specifics of laptop.
-    chat: list[str]
+
 
     # This Flag helps end the conversation with the llm
     finished: bool
@@ -106,9 +105,6 @@ agent_app = graph.compile()
 # --- Exposed functions for frontend ---
 def init_state() -> Dict[str, Any]:
     """Initialize memory state."""
-    return {"history": []}
-
-def run_agent(state: Dict[str, Any], user_input: str) -> Dict[str, Any]:
-    """Run the agent with given state + user input."""
-    result = agent_app.invoke({"input": user_input, **state})
-    return {"output": result["output"], "history": result["history"]}
+    return {"messages": [],
+            "finished": False,
+            "tool_in_use": False}
