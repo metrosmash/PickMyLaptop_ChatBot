@@ -10,10 +10,10 @@ from typing import List, Dict
 from langchain_core.messages import HumanMessage
 from langchain_core.messages import ToolMessage
 
-from Backend import init_state, ChatState, agent_app
+from Backend import init_state, ChatState, agent_app, get_db_connection
 
 
-#Streamlit UI
+# Streamlit UI
 streamlit_ui()
 
 
@@ -24,6 +24,22 @@ if "agent_state" not in st.session_state:
 # # --- Initialize chat history ---
 if "messages" not in st.session_state.agent_state:
     st.session_state.agent_state["messages"] = []
+
+# --- Initialize database connection---
+# if "db_conn" not in st.session_state:
+#     st.session_state = get_db_connection()
+if "db_conn" not in st.session_state or not st.session_state.db_conn.is_connected():
+    try:
+        st.session_state.db_conn = get_db_connection()
+    except RuntimeError:
+        st.stop()  # stop the app gracefully if connection fails
+
+
+# --Close the Database Conection --
+# this will close the database connection on close of the app
+# if "db_conn" in st.session_state:
+#     st.session_state.db_conn.close()
+
 
 
 # Display past messages
