@@ -55,6 +55,7 @@ class ChatState(TypedDict):
 
     # This Flag helps indicate to the human node that the tool is in use
     tool_in_use: bool
+    query_type: str
 
 
 def get_db_connection():
@@ -80,23 +81,52 @@ def get_db_connection():
 
 
 
-def query_sql_database(query: str, values=None):
+def query_sql_database(query: str, state: Dict = None, values=None):
     """
     Execute a SQL query using a persistent connection.
 
     - query: SQL string with %s placeholders
     - values: None, a single value, or a tuple/list of multiple values
     - returns: list of dict rows or error dict
+    :type query_type: object
     """
     conn = st.session_state.db_conn  # ✅ use the persistent connection
+    query_type = state.get("query_type") if state else "use_value"
 
+    # try:
+    #     with conn.cursor() as cursor:
+    #         # ✅ Convert single value to tuple if needed
+    #         if values is not None:
+    #             if not isinstance(values, (tuple, list)):
+    #                 values = (values,)
+    #             cursor.execute(query, values)
+    #         else:
+    #             cursor.execute(query)
+    #
+    #         results = cursor.fetchall()
+    #         columns = [col[0] for col in cursor.description]
+    #         return [dict(zip(columns, row)) for row in results]
     try:
         with conn.cursor() as cursor:
             # ✅ Convert single value to tuple if needed
-            if values is not None:
+            if query_type == "use_value":
                 if not isinstance(values, (tuple, list)):
                     values = (values,)
                 cursor.execute(query, values)
+
+            elif query_type == "use_keyword":
+                # Keyword searches may require multiple placeholders
+                if not isinstance(values, (tuple, list)):
+                    values = tuple([values] * query.count("%s"))
+                cursor.execute(query, values)
+
+            elif query_type == "use_range":
+                # Handle BETWEEN queries
+                cursor.execute(query, values)
+            # if values is not None:
+            #     if not isinstance(values, (tuple, list)):
+            #         values = (values,)
+            #     cursor.execute(query, values)
             else:
                 cursor.execute(query)
 
@@ -104,11 +134,12 @@ def query_sql_database(query: str, values=None):
             columns = [col[0] for col in cursor.description]
             return [dict(zip(columns, row)) for row in results]
 
+
     except mysql.connector.Error as e:
         # ✅ Try to reconnect once if connection dropped
         if not conn.is_connected():
             st.session_state.db_conn = get_db_connection()
-            return query_sql_database(query, values)
+            return query_sql_database(query, values, state)
         return {"error": f"MySQL error: {e}"}
 
 
@@ -119,22 +150,23 @@ class Attribute_search(BaseModel):
     value: object = Field(description = "the value to search for " )
 
 
-def attribute_search(attribute: str, value: object)-> dict:
+def attribute_search(attribute: str, value: object, state=None)-> dict:
     """
     Search laptops where a specific column matches a given value.
     Example: search_by_attribute("Brand", "Dell")
     """
     ALLOWED_COLUMNS = {"id", "Brand", "Product_Description", "Screen_Size", "RAM", "Processor",
-                       "GPU", "GPU_Type", "Resolution", "Condition", "Price", "SSD", "HDD"}
+                       "GPU", "GPU_Type", "Resolution", "Condition1", "Price", "SSD", "HDD"}
     if attribute not in ALLOWED_COLUMNS:
         raise ValueError("Invalid attribute name")
 
     query = f"SELECT * FROM `laptop_dataset` WHERE LOWER(`{attribute}`) LIKE %s LIMIT 10;"
     like_value = f"%{value.lower()}%"
 
-    # cursor.execute(query, (value,))
-    # return cursor.fetchall()
-    return query_sql_database(query, value)
+    # Set query type dynamically
+    if state is not None:
+        state["query_type"] = "use_value"
+    return query_sql_database(query, state, value)
 
 
 #  Search for a specific laptop (by name or description)
@@ -143,43 +175,94 @@ class SpecificSearch(BaseModel):
 
 
 
-def search_specific_laptop(keyword: object)-> dict:
+def search_specific_laptop(keyword: object,  state=None)-> dict:
     """
     Search for a laptop by brand, product description, or processor containing the keyword.
     Example: search_specific_laptop("MacBook")
     """
-    query = """SELECT * FROM `laptop_dataset` WHERE Brand LIKE %s OR Product_Description LIKE %s OR Processor LIKE %s OR 
-    Screen_Size LIKE %s OR RAM LIKE %s OR GPU LIKE %s OR GPU_Type LIKE %s OR Condition Like %s LIMIT 10"""
+    query = """SELECT * FROM `laptop_dataset` 
+    WHERE Brand LIKE %s OR Product_Description LIKE %s OR Processor LIKE %s OR Screen_Size LIKE %s OR RAM LIKE %s OR 
+    GPU LIKE %s OR GPU_Type LIKE %s OR Condition1 Like %s LIMIT 10"""
 
-    keyword = f"'%{keyword}%'"  # Partial match
-    query_sql_database(query, (keyword, keyword, keyword, keyword, keyword, keyword, keyword, keyword))
+    keyword = f"%{keyword}%"  # Partial match
+    if state is not None:
+        state["query_type"] = "use_keyword"
+
+    # return query_sql_database(query, state, keyword)
+    # ✅ Correct order of parameters: query, query_type, values
+    return query_sql_database(
+        query=query,
+        state = state,
+        values=(keyword, keyword, keyword, keyword, keyword, keyword, keyword, keyword)
+    )
     # cursor.execute(query, (keyword, keyword, keyword, keyword, keyword, keyword, keyword, keyword))
     # return cursor.fetchall()
+
+
+#  Search by range of common attributes
+class RangeSearch(BaseModel):
+    attribute: str = Field(description = "column in the database which will be searched using range of min - max")
+    min_value: int = Field(description = "the minimum value in the range of search")
+    max_value: int = Field(description = "the maximum value in the range of search")
+
+
+
+def search_by_range(attribute: str, min_value: int, max_value: int, state = None)-> dict:
+    """
+    Search Laptop where a numeric attribute falls between two values.
+    Example: search_by_range("Price", 500, 1000)
+    """
+
+    ALLOWED_COLUMNS = {"id", "Brand", "Product_Description", "Screen_Size", "RAM", "Processor",
+                       "GPU", "GPU_Type", "Resolution", "Condition1", "Price", "SSD", "HDD"}
+
+    if attribute not in ALLOWED_COLUMNS:
+        raise ValueError("Invalid attribute name")
+
+    query = f"SELECT * FROM `laptop_dataset` WHERE {attribute} BETWEEN %s AND %s LIMIT 10"
+
+    if state is not None:
+        state["query_type"] = "use_range"
+
+    return query_sql_database(query, state, values = (min_value, max_value))
+
+    # cursor.execute(query, (min_value, max_value))
+
+
+
 
 
 ## Log of what to do next
 '''
 1.)Check the ⏳ Let me check the database for you, please wait...
-its not syncing with the data
-2.)the specific search tool is not working work on it 
-add the database  
-3.)add the remaining tools when done 
+its not syncing with the screen.
+2.) try to create a new tool specific range search that combines the range tool and the specific search tool to find a 
+specific brand within a specific price range 
+3.) after adding the remaining tools remove the ToolMessage from showing on the streamlit tabs
 '''
 @tool(args_schema=Attribute_search)
-def get_attribute_search_tool(attribute: str, value: object) -> dict:
+def get_attribute_search_tool(attribute: str, value: object, state=None) -> dict:
     """
     Search laptops where a specific column matches a given value.
     Example: search_by_attribute("Brand", "Dell")
     """
-    return attribute_search(attribute, value)
+    return attribute_search(attribute, value, state=state)
 
 @tool(args_schema= SpecificSearch)
-def get_specific_search_tool(keyword: object)-> dict:
+def get_specific_search_tool(keyword: object, state=None)-> dict:
     """
     Search for a laptop by brand, product description, or processor containing the keyword.
     Example: search_specific_laptop("MacBook")
     """
-    return search_specific_laptop(keyword)
+    return search_specific_laptop(keyword, state=state)
+
+@tool(args_schema= RangeSearch)
+def get_range_search_tool(attribute: str, min_value: int, max_value: int, state=None) -> dict:
+    """
+    Search Laptop where a numeric attribute falls between two values.
+    Example: search_by_range("Price", 500, 1000)
+    """
+    return search_by_range(attribute, min_value, max_value, state=state)
 
 
 # add sql capabilities here
@@ -251,8 +334,8 @@ def route_tools(
 
 llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash")
 
-#tools = [get_attribute_search_tool, get_specific_search_tool, get_range_search_tool]
-tools = [get_attribute_search_tool, get_specific_search_tool]
+tools = [get_attribute_search_tool, get_specific_search_tool, get_range_search_tool]
+
 
 def chatbot_with_welcome_msg(state: ChatState) -> ChatState:
     """The chatbot itself. A wrapper around the model's own chat interface."""
