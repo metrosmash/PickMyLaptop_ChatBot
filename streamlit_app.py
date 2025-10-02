@@ -7,8 +7,7 @@ import mysql.connector
 from frontend import streamlit_ui
 import pandas as pd
 from typing import List, Dict
-from langchain_core.messages import HumanMessage
-from langchain_core.messages import ToolMessage
+from langchain_core.messages import HumanMessage, ToolMessage, AIMessage
 
 from Backend import init_state, ChatState, agent_app, get_db_connection
 
@@ -43,10 +42,29 @@ if "db_conn" not in st.session_state or not st.session_state.db_conn.is_connecte
 
 
 # Display past messages
+
+# filtered_messages = [
+#     msg for msg in st.session_state.agent_state["messages"]
+#     if not isinstance(msg, ToolMessage)
+# ]
+
+# for msg in st.session_state.agent_state["messages"]:
+#     if isinstance(msg, ToolMessage):
+#         continue
+#
+#     role = "user" if isinstance(msg, HumanMessage) else "assistant"
+#     with st.chat_message(role):
+#         st.markdown(msg.content)
+
+# ✅ Show only messages intended for the chat UI
 for msg in st.session_state.agent_state["messages"]:
+    if not isinstance(msg, (HumanMessage, AIMessage)):
+        continue
+
     role = "user" if isinstance(msg, HumanMessage) else "assistant"
     with st.chat_message(role):
         st.markdown(msg.content)
+
 
 # Input box
 if user_input := st.chat_input("What laptop do you wish to get...."):

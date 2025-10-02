@@ -147,10 +147,10 @@ def query_sql_database(query: str, state: Dict = None, values=None):
 # Search by a common attribute
 class Attribute_search(BaseModel):
     attribute: str = Field(description = "column of the database to search")
-    value: object = Field(description = "the value to search for " )
+    value: object = Field(description = "the value to search for ")
 
 
-def attribute_search(attribute: str, value: object, state=None)-> dict:
+def attribute_search(attribute: str, value: object, state=None) -> dict:
     """
     Search laptops where a specific column matches a given value.
     Example: search_by_attribute("Brand", "Dell")
@@ -229,6 +229,57 @@ def search_by_range(attribute: str, min_value: int, max_value: int, state = None
     # cursor.execute(query, (min_value, max_value))
 
 
+class AttributeRangeSearch(BaseModel):
+    attribute: str = Field(description="The column name to match (e.g., Brand, GPU)")
+    value: str = Field(description="The value to search for (e.g., Dell)")
+    range_column: str = Field(description="The numeric column to filter by (e.g., Price, RAM)")
+    min_value: int = Field(description="Minimum value for the range filter")
+    max_value: int = Field(description="Maximum value for the range filter")
+
+def attribute_range_search(
+    attribute: str,
+    value: str,
+    range_column: str,
+    min_value: int,
+    max_value: int,
+    state=None
+) -> dict:
+
+    """
+    Search laptops where a specific attribute matches a value AND a numeric column falls within a range.
+    Example:
+        attribute_range_search(
+            attribute="Brand", value="Dell",
+            range_column="Price", min_value=100, max_value=500
+        )
+    """
+    # ✅ 1. Validate inputs
+    ALLOWED_TEXT_COLUMNS = {"Brand", "Product_Description", "Processor", "Condition", "GPU", "GPU_Type"}
+    ALLOWED_NUMERIC_COLUMNS = {"Price", "RAM", "SSD", "HDD", "Screen_Size"}
+
+    if attribute not in ALLOWED_TEXT_COLUMNS:
+        raise ValueError(f"Invalid text column: {attribute}")
+    if range_column not in ALLOWED_NUMERIC_COLUMNS:
+        raise ValueError(f"Invalid numeric column: {range_column}")
+
+    # ✅ 2. Build the query
+    query = f"""
+    SELECT * FROM `laptop_dataset`
+    WHERE LOWER(`{attribute}`) LIKE %s
+    AND `{range_column}` BETWEEN %s AND %s
+    LIMIT 10;
+    """
+
+    # ✅ 3. Prepare values
+    like_value = f"%{value.lower()}%"
+    values = (like_value, min_value, max_value)
+
+    # ✅ 4. Mark query type in state (optional)
+    if state is not None:
+        state["query_type"] = "specific_range"
+
+    # ✅ 5. Execute
+    return query_sql_database(query, state = state, values=values)
 
 
 
@@ -236,9 +287,7 @@ def search_by_range(attribute: str, min_value: int, max_value: int, state = None
 '''
 1.)Check the ⏳ Let me check the database for you, please wait...
 its not syncing with the screen.
-2.) try to create a new tool specific range search that combines the range tool and the specific search tool to find a 
-specific brand within a specific price range 
-3.) after adding the remaining tools remove the ToolMessage from showing on the streamlit tabs
+2.) after adding the remaining tools remove the ToolMessage from showing on the streamlit tabs (do this)
 '''
 @tool(args_schema=Attribute_search)
 def get_attribute_search_tool(attribute: str, value: object, state=None) -> dict:
@@ -264,8 +313,25 @@ def get_range_search_tool(attribute: str, min_value: int, max_value: int, state=
     """
     return search_by_range(attribute, min_value, max_value, state=state)
 
+@tool(args_schema= AttributeRangeSearch)
+def get_attribute_range_search(
+    attribute: str,
+    value: str,
+    range_column: str,
+    min_value: int,
+    max_value: int,
+    state=None
+) -> dict:
+    """
+      Search laptops where a text attribute matches and a numeric column is within a range.
+    """
 
-# add sql capabilities here
+    return attribute_range_search(
+        attribute, value, range_column, min_value, max_value, state
+    )
+
+
+
 """
 I will need to revamp the sql capabilities of the tools 
 like on the kaggle notebook all i had to do was keep the cursor open
@@ -334,7 +400,7 @@ def route_tools(
 
 llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash")
 
-tools = [get_attribute_search_tool, get_specific_search_tool, get_range_search_tool]
+tools = [get_attribute_search_tool, get_specific_search_tool, get_range_search_tool, get_attribute_range_search]
 
 
 def chatbot_with_welcome_msg(state: ChatState) -> ChatState:
