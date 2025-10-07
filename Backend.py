@@ -370,8 +370,9 @@ class BasicToolNode():
             #         content=f"Here are the results from **{tool_call['name']}**:\n{json.dumps(tool_result, indent=2)}"
             #     )
             # )
-        # return {"messages": state["messages"] + tool_outputs}
-        return {"messages": tool_outputs}
+
+            # return {"messages": state["messages"] + tool_outputs}
+            return {"messages": tool_outputs}
 
 
 def route_tools(
