@@ -3,25 +3,14 @@
 import os
 import json
 import streamlit as st
-from typing import Dict, Any, List
+from typing import Dict, Any
 import mysql.connector
-from langgraph.graph import StateGraph
-from langchain_google_genai import GoogleGenerativeAI
-
 from typing import Annotated
-from typing_extensions import TypedDict
-
 from langgraph.graph.message import add_messages
-
-
 from langgraph.graph import StateGraph, END
-from typing import TypedDict, List
-
-from langchain_core.tools import tool
-from langchain_core.messages import ToolMessage
+from typing import TypedDict
 from langchain_core.messages.ai import AIMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
-
 # for the tools
 from pydantic import BaseModel, Field
 from langchain_core.tools import tool
@@ -36,7 +25,7 @@ os.environ["GOOGLE_API_KEY"] = Gemini_Api_key
 
 
 # Define the Bot prompt
-with open("bot_promptv1.txt", "r") as f:
+with open("bot_prompt.txt", "r") as f:
     laptop_chatbot = f.read()
 
 Welcome_msg = "Hello, What can i do for you"  # just for now i will change it later
@@ -56,6 +45,7 @@ class ChatState(TypedDict):
     # This Flag helps indicate to the human node that the tool is in use
     tool_in_use: bool
     query_type: str
+    tool_context: []
 
 
 def get_db_connection():
@@ -73,7 +63,7 @@ def get_db_connection():
             raise ConnectionError(" Could not connect to the database")
     except mysql.connector.Error as e:
         # return {"error": f"MySQL error: {e}"}
-        st.error(f"❌ Failed to connect to MySQL: {e}")
+        st.error(f"Failed to connect to MySQL: {e}")
         raise ConnectionError(f"MySQL connection error: {e}")
 
 
@@ -88,27 +78,14 @@ def query_sql_database(query: str, state: Dict = None, values=None):
     - query: SQL string with %s placeholders
     - values: None, a single value, or a tuple/list of multiple values
     - returns: list of dict rows or error dict
-    :type query_type: object
+    :type state: object
     """
-    conn = st.session_state.db_conn  # ✅ use the persistent connection
+    conn = st.session_state.db_conn  # use the persistent connection
     query_type = state.get("query_type") if state else "use_value"
 
-    # try:
-    #     with conn.cursor() as cursor:
-    #         # ✅ Convert single value to tuple if needed
-    #         if values is not None:
-    #             if not isinstance(values, (tuple, list)):
-    #                 values = (values,)
-    #             cursor.execute(query, values)
-    #         else:
-    #             cursor.execute(query)
-    #
-    #         results = cursor.fetchall()
-    #         columns = [col[0] for col in cursor.description]
-    #         return [dict(zip(columns, row)) for row in results]
     try:
         with conn.cursor() as cursor:
-            # ✅ Convert single value to tuple if needed
+            # Convert single value to tuple if needed
             if query_type == "use_value":
                 if not isinstance(values, (tuple, list)):
                     values = (values,)
@@ -134,9 +111,8 @@ def query_sql_database(query: str, state: Dict = None, values=None):
             columns = [col[0] for col in cursor.description]
             return [dict(zip(columns, row)) for row in results]
 
-
     except mysql.connector.Error as e:
-        # ✅ Try to reconnect once if connection dropped
+        # Try to reconnect once if connection dropped
         if not conn.is_connected():
             st.session_state.db_conn = get_db_connection()
             return query_sql_database(query, values, state)
@@ -145,9 +121,9 @@ def query_sql_database(query: str, state: Dict = None, values=None):
 
 # Setting up the tools that will be used
 # Search by a common attribute
-class Attribute_search(BaseModel):
-    attribute: str = Field(description = "column of the database to search")
-    value: object = Field(description = "the value to search for ")
+class AttributeSearch(BaseModel):
+    attribute: str = Field(description="column of the database to search")
+    value: object = Field(description="the value to search for ")
 
 
 def attribute_search(attribute: str, value: object, state=None) -> dict:
@@ -189,14 +165,13 @@ def search_specific_laptop(keyword: object,  state=None)-> dict:
         state["query_type"] = "use_keyword"
 
     # return query_sql_database(query, state, keyword)
-    # ✅ Correct order of parameters: query, query_type, values
+    # Correct order of parameters: query, query_type, values
     return query_sql_database(
         query=query,
         state = state,
         values=(keyword, keyword, keyword, keyword, keyword, keyword, keyword, keyword)
     )
-    # cursor.execute(query, (keyword, keyword, keyword, keyword, keyword, keyword, keyword, keyword))
-    # return cursor.fetchall()
+
 
 
 #  Search by range of common attributes
@@ -207,16 +182,16 @@ class RangeSearch(BaseModel):
 
 
 
-def search_by_range(attribute: str, min_value: int, max_value: int, state = None)-> dict:
+def search_by_range(attribute: str, min_value: int, max_value: int, state=None)-> dict:
     """
     Search Laptop where a numeric attribute falls between two values.
     Example: search_by_range("Price", 500, 1000)
     """
 
-    ALLOWED_COLUMNS = {"id", "Brand", "Product_Description", "Screen_Size", "RAM", "Processor",
+    allowed_columns = {"id", "Brand", "Product_Description", "Screen_Size", "RAM", "Processor",
                        "GPU", "GPU_Type", "Resolution", "Condition1", "Price", "SSD", "HDD"}
 
-    if attribute not in ALLOWED_COLUMNS:
+    if attribute not in allowed_columns:
         raise ValueError("Invalid attribute name")
 
     query = f"SELECT * FROM `laptop_dataset` WHERE {attribute} BETWEEN %s AND %s LIMIT 10"
@@ -226,7 +201,6 @@ def search_by_range(attribute: str, min_value: int, max_value: int, state = None
 
     return query_sql_database(query, state, values = (min_value, max_value))
 
-    # cursor.execute(query, (min_value, max_value))
 
 
 class AttributeRangeSearch(BaseModel):
@@ -253,16 +227,16 @@ def attribute_range_search(
             range_column="Price", min_value=100, max_value=500
         )
     """
-    # ✅ 1. Validate inputs
-    ALLOWED_TEXT_COLUMNS = {"Brand", "Product_Description", "Processor", "Condition", "GPU", "GPU_Type"}
-    ALLOWED_NUMERIC_COLUMNS = {"Price", "RAM", "SSD", "HDD", "Screen_Size"}
+    # 1. Validate inputs
+    allowed_text_columns = {"Brand", "Product_Description", "Processor", "Condition", "GPU", "GPU_Type"}
+    allowed_numeric_columns = {"Price", "RAM", "SSD", "HDD", "Screen_Size"}
 
-    if attribute not in ALLOWED_TEXT_COLUMNS:
+    if attribute not in allowed_text_columns:
         raise ValueError(f"Invalid text column: {attribute}")
-    if range_column not in ALLOWED_NUMERIC_COLUMNS:
+    if range_column not in allowed_numeric_columns:
         raise ValueError(f"Invalid numeric column: {range_column}")
 
-    # ✅ 2. Build the query
+    # 2. Build the query
     query = f"""
     SELECT * FROM `laptop_dataset`
     WHERE LOWER(`{attribute}`) LIKE %s
@@ -270,26 +244,20 @@ def attribute_range_search(
     LIMIT 10;
     """
 
-    # ✅ 3. Prepare values
+    # 3. Prepare values
     like_value = f"%{value.lower()}%"
     values = (like_value, min_value, max_value)
 
-    # ✅ 4. Mark query type in state (optional)
+    # 4. Mark query type in state (optional)
     if state is not None:
         state["query_type"] = "specific_range"
 
-    # ✅ 5. Execute
+    # 5.Execute
     return query_sql_database(query, state = state, values=values)
 
 
 
-## Log of what to do next
-'''
-1.)Check the ⏳ Let me check the database for you, please wait...
-its not syncing with the screen.
-2.) after adding the remaining tools remove the ToolMessage from showing on the streamlit tabs (do this)
-'''
-@tool(args_schema=Attribute_search)
+@tool(args_schema=AttributeSearch)
 def get_attribute_search_tool(attribute: str, value: object, state=None) -> dict:
     """
     Search laptops where a specific column matches a given value.
@@ -331,14 +299,6 @@ def get_attribute_range_search(
     )
 
 
-
-"""
-I will need to revamp the sql capabilities of the tools 
-like on the kaggle notebook all i had to do was keep the cursor open
-but now i need to open it anytime the AI is using a tool 
-
-"""
-
 # Setting up the tool Node
 class BasicToolNode():
     """A node that runs the tools requested in the last AIMessage."""
@@ -351,28 +311,24 @@ class BasicToolNode():
             message = messages[-1]
         else:
             raise ValueError("No message found in input")
-        tool_outputs = []
+
+        # Ensure the list exists
+        if "tool_context" not in inputs:
+            inputs["tool_context"] = []
 
         for tool_call in message.tool_calls:
-            tool_result = self.tools_by_name[tool_call["name"]].invoke(
-                tool_call["args"]
-            )
-            tool_outputs.append(
-                ToolMessage(
-                    content=json.dumps(tool_result),
-                    name=tool_call["name"],
-                    tool_call_id=tool_call["id"],
-                )
-            )
-            # Convert tool result into an AIMessage instead of ToolMessage
-            # tool_outputs.append(
-            #     AIMessage(
-            #         content=f"Here are the results from **{tool_call['name']}**:\n{json.dumps(tool_result, indent=2)}"
-            #     )
-            # )
+            tool_name = tool_call["name"]
+            tool_args = tool_call["args"]
+            tool_result = self.tools_by_name[tool_name].invoke(tool_args)
 
-            # return {"messages": state["messages"] + tool_outputs}
-            return {"messages": tool_outputs}
+            # ✅ Store a structured record
+            inputs["tool_context"].append({
+                "tool": tool_name,
+                "args": tool_args,
+                "result": tool_result
+            })
+
+            return inputs
 
 
 def route_tools(
@@ -404,22 +360,41 @@ llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash")
 tools = [get_attribute_search_tool, get_specific_search_tool, get_range_search_tool, get_attribute_range_search]
 
 
+
+
+
 def chatbot_with_welcome_msg(state: ChatState) -> ChatState:
-    """The chatbot itself. A wrapper around the model's own chat interface."""
     llm_with_tools = llm.bind_tools(tools)
 
+    system_prompt = laptop_chatbot
+
+    # Add tool context if available
+    if state.get("tool_context"):
+        context_summary = "\n\n[Tool Results So Far:]\n"
+        for idx, ctx in enumerate(state["tool_context"], 1):
+            context_summary += (
+                f"\nTool {idx}: {ctx['tool']}\n"
+                f"Args: {json.dumps(ctx['args'], indent=2)}\n"
+                f"Result: {json.dumps(ctx['result'], indent=2)}\n"
+            )
+        system_prompt += context_summary
+
     if state["messages"]:
-        # If there are messages, continue the conversation with the Gemini model.
-        new_output = llm_with_tools.invoke([laptop_chatbot] + state["messages"])
-        # new_output = llm.invoke([laptop_chatbot] + state["messages"])
+        new_output = llm_with_tools.invoke([system_prompt] + state["messages"])
     else:
-        # If there are no messages, start with the welcome message.
         new_output = AIMessage(content=Welcome_msg)
+
+    # Optionally reset or keep tool_context
+    # state["tool_context"] = []  # clear if you only want the latest
+    # (Or keep it if you want accumulated memory of all tools)
 
     return state | {"messages": [new_output]}
 
 
+
+
 # --- Build graph ---
+
 graph = StateGraph(ChatState)
 tool_node = BasicToolNode(tools=tools)
 
@@ -446,5 +421,6 @@ def init_state() -> Dict[str, Any]:
     """Initialize memory state."""
     return {"messages": [],
             "finished": False,
-            "tool_in_use": False}
+            "tool_in_use": False,
+            "tool_context": []}
 

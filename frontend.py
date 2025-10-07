@@ -8,11 +8,11 @@ import mysql.connector
 def streamlit_ui():
 
     # Show title and description.
-    st.title("💻 PickMyLaptop_Chatbot V.0.5")
+    st.title("💻 PickMyLaptop_Chatbot V.1")
     st.write("👋 Welcome to your smart laptop shopping assistant!")
 
     st.markdown("""Looking for the perfect laptop but not sure where to start? You're in the right place! 
-    **PickMyLaptop_Chatbot V.0** is an intelligent assistant powered by **Gemini Flash 2.5**, designed to guide you 
+    **PickMyLaptop_Chatbot V.1** is an intelligent assistant powered by **Gemini Flash 2.5**, designed to guide you 
     through the laptop selection process based on your preferences, needs, and budget.
     
     Whether you're a student, gamer, professional, or casual user, our AI assistant can help you:

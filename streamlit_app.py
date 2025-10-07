@@ -1,9 +1,6 @@
 # Importing the libraries
-from google import genai
-from google.genai import types
+
 import streamlit as st
-import mysql.connector
-#from Backend import init_chat_history, gemini_agent_setup
 from frontend import streamlit_ui
 import pandas as pd
 from typing import List, Dict
@@ -40,23 +37,9 @@ if "db_conn" not in st.session_state or not st.session_state.db_conn.is_connecte
 #     st.session_state.db_conn.close()
 
 
-
 # Display past messages
 
-# filtered_messages = [
-#     msg for msg in st.session_state.agent_state["messages"]
-#     if not isinstance(msg, ToolMessage)
-# ]
-
-# for msg in st.session_state.agent_state["messages"]:
-#     if isinstance(msg, ToolMessage):
-#         continue
-#
-#     role = "user" if isinstance(msg, HumanMessage) else "assistant"
-#     with st.chat_message(role):
-#         st.markdown(msg.content)
-
-# ✅ Show only messages intended for the chat UI
+# Show only messages intended for the chat UI
 for msg in st.session_state.agent_state["messages"]:
     if not isinstance(msg, (HumanMessage, AIMessage)):
         continue
@@ -81,8 +64,6 @@ if user_input := st.chat_input("What laptop do you wish to get...."):
         "tool_in_use": st.session_state.agent_state.get("tool_in_use", False)
     })
 
-
-
     # Update agent state (memory)
     st.session_state.agent_state.update(result)
 
@@ -92,5 +73,3 @@ if user_input := st.chat_input("What laptop do you wish to get...."):
     # Display it
     with st.chat_message("assistant"):
         st.markdown(ai_response)
-
-## i have to rework the whole relationship between the add messages and the ai agent 
