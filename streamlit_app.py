@@ -1,143 +1,75 @@
 # Importing the libraries
-from google import genai
-from google.genai import types
+
 import streamlit as st
-import mysql.connector
+from frontend import streamlit_ui
 import pandas as pd
 from typing import List, Dict
+from langchain_core.messages import HumanMessage, ToolMessage, AIMessage
 
-# Config and Secrets
-# Retrieve credentials from Streamlit secrets
+from Backend import init_state, ChatState, agent_app, get_db_connection
 
-db_username = st.secrets["DB_username"]
-db_password = st.secrets["DB_password"]
-Gemini_Api_key = st.secrets["API_key"]
-
-
-# DB & Tools
-def query_sql_database(query: str):
-    conn = None
-    try:
-        # Connect to MySQL
-        conn = mysql.connector.connect(
-            host="db4free.net",
-            user=db_username,
-            password=db_password,
-            database="metro_laptop"
-        )
-
-        if conn.is_connected():
-            cursor = conn.cursor()
-            cursor.execute(query)
-            results = cursor.fetchall()
-
-            # Get column names
-            # columns = [i[0] for i in cursor.description]
-
-            # Return as a DataFrame (or you could return list of dicts)
-            # df = pd.DataFrame(results, columns=columns)
-
-            # return df  # Let the AI agent process the DataFrame
-            return results
-
-    except mysql.connector.Error as e:
-        # Return error message instead of raising
-        return {"error": str(e)}
-
-    finally:
-        # Always clean up
-        if 'cursor' in locals() and cursor:
-            cursor.close()
-        if 'conn' in locals() and conn.is_connected():
-            conn.close()
-
-
-
-# result = query_sql_database("SELECT * FROM laptop_dataset LIMIT 5;")
-# st.write(result)
-
-
-# Setting the Bot prompt
-with open("Bot_prompt1.txt", "r") as f:
-    BOT_PROMPT = f.read()
-
-# result = query_sql_database("SELECT * FROM laptop_dataset LIMIT 5;")
 
 # Streamlit UI
-
-# Show title and description.
-st.title("💻 PickMyLaptop_Chatbot V.0")
-st.write("👋 Welcome to your smart laptop shopping assistant!")
-
-st.markdown("""Looking for the perfect laptop but not sure where to start? You're in the right place! 
-**PickMyLaptop_Chatbot V.0** is an intelligent assistant powered by **Gemini Flash 2.5**, designed to guide you 
-through the laptop selection process based on your preferences, needs, and budget.
-
-Whether you're a student, gamer, professional, or casual user, our AI assistant can help you:
-- Compare different laptop models
-- Understand key features and specs
-- Find laptops within your price range
-- Make confident, informed decisions
-
-Start by telling the chatbot what you're looking for – and let the assistant do the rest!
-""")
-# st.write(
-#     "This is a simple chatbot that uses Gemini flash 2.5 model to help users pick their preferred laptop. "
-#     "To use this app, you need to provide a Gemini API key, which you can get [here]("
-#     "https://ai.google.dev/gemini-api/docs/api-key)."
-#     "You can also learn how to build this app step by step by [following our tutorial]("
-#     "https://docs.streamlit.io/develop/tutorials/llms/build-conversational-apps)."
-# )
-# Initialize chat history
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-
-if "Gemini_model" not in st.session_state:
-    st.session_state["Gemini_model"] = "gemini-2.0-flash"
+streamlit_ui()
 
 
-# Memory Setup
-def get_conversation_memory():
-    """
-    Returns previous user-agent message pairs as formatted string.
-    """
+# --- Initialize agent memory ---
+if "agent_state" not in st.session_state:
+    st.session_state.agent_state = init_state()
 
-    context = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state.messages])
-    return context
+# # --- Initialize chat history ---
+if "messages" not in st.session_state.agent_state:
+    st.session_state.agent_state["messages"] = []
+
+# --- Initialize database connection---
+# if "db_conn" not in st.session_state:
+#     st.session_state = get_db_connection()
+if "db_conn" not in st.session_state or not st.session_state.db_conn.is_connected():
+    try:
+        st.session_state.db_conn = get_db_connection()
+    except RuntimeError:
+        st.stop()  # stop the app gracefully if connection fails
 
 
-# Gemini Agent Setup
-assistant_function = [
-    query_sql_database, get_conversation_memory
-]
+# --Close the Database Conection --
+# this will close the database connection on close of the app
+# if "db_conn" in st.session_state:
+#     st.session_state.db_conn.close()
 
-client = genai.Client(api_key=Gemini_Api_key)
-chat = client.chats.create(
-    model=st.session_state["Gemini_model"],
-    config=types.GenerateContentConfig(
-        tools=assistant_function,
-        system_instruction=BOT_PROMPT
-    ),
-)
 
-# Chat Logic
+# Display past messages
 
-# Display chat messages from history on app rerun
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+# Show only messages intended for the chat UI
+for msg in st.session_state.agent_state["messages"]:
+    if not isinstance(msg, (HumanMessage, AIMessage)):
+        continue
 
-# React to user input
-if prompt := st.chat_input("What can i do for you - "):
-    # Add user message to chat history
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    # Display user message in chat message container
+    role = "user" if isinstance(msg, HumanMessage) else "assistant"
+    with st.chat_message(role):
+        st.markdown(msg.content)
+
+
+# Input box
+if user_input := st.chat_input("What laptop do you wish to get...."):
+    # User message
+    st.session_state.agent_state["messages"].append(HumanMessage(content=user_input))
     with st.chat_message("user"):
-        st.markdown(prompt)
+        st.markdown(user_input)
 
-    response = chat.send_message(prompt)
-    # Display assistant response in chat message container
+    # Run agent backend
+    result = agent_app.invoke({
+        **st.session_state.agent_state,
+        "messages": st.session_state.agent_state.get("messages", []),
+        "finished": st.session_state.agent_state.get("finished", False),
+        "tool_in_use": st.session_state.agent_state.get("tool_in_use", False)
+    })
+
+    # Update agent state (memory)
+    st.session_state.agent_state.update(result)
+
+    # Get the latest AI response
+    ai_response = st.session_state.agent_state["messages"][-1].content
+
+    # Display it
     with st.chat_message("assistant"):
-        st.markdown(response.text)
-    # Add assistant response to chat history
-    st.session_state.messages.append({"role": "assistant", "content": response.text})
+        st.markdown(ai_response)
