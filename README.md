@@ -1,6 +1,7 @@
 # 💬 PickMyLaptop_Chatbot
 
-AN App that uses an AI Agent to help users pick their best choice of laptops.
+An application powered by an AI agent that helps users find and select the best laptops based on their preferences. 
+The agent is equipped with specialized tools to query a laptop database and provide tailored recommendations. 
 
 [![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://chatbot-uc6zpm9iv3.streamlit.app/)
 ### How to install on your machine 
