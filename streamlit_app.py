@@ -6,7 +6,9 @@ import pandas as pd
 from typing import List, Dict
 from langchain_core.messages import HumanMessage, ToolMessage, AIMessage
 
-from Backend import init_state, ChatState, agent_app, get_db_connection
+from Backend import init_state, ChatState, agent_app
+from database import health_check
+from database.exceptions import DatabaseConnectionError
 
 
 # Streamlit UI
@@ -21,20 +23,18 @@ if "agent_state" not in st.session_state:
 if "messages" not in st.session_state.agent_state:
     st.session_state.agent_state["messages"] = []
 
-# --- Initialize database connection---
-# if "db_conn" not in st.session_state:
-#     st.session_state = get_db_connection()
-if "db_conn" not in st.session_state or not st.session_state.db_conn.is_connected():
+# --- Verify the database is reachable ---
+# No connection is stored in session_state anymore: database/db.py checks one out of
+# a shared pool for each query and returns it. Holding one connection per browser
+# session is exactly how you exhaust a free-tier host's connection limit.
+if not st.session_state.get("db_ready"):
     try:
-        st.session_state.db_conn = get_db_connection()
-    except RuntimeError:
-        st.stop()  # stop the app gracefully if connection fails
-
-
-# --Close the Database Conection --
-# this will close the database connection on close of the app
-# if "db_conn" in st.session_state:
-#     st.session_state.db_conn.close()
+        info = health_check()
+        st.session_state.db_ready = True
+        st.session_state.db_version = info.get("version")
+    except DatabaseConnectionError as error:
+        st.error(f"Database is not reachable: {error}")
+        st.stop()  # stop the app gracefully if the DB is down
 
 
 # Display past messages

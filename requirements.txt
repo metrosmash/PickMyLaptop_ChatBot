@@ -8,6 +8,8 @@ requests
 SQLAlchemy==1.4.0
 PyMySQL
 mysql-connector-python
+cryptography
+python-dotenv
 pandas
 langgraph==0.3.21
 langchain-google-genai==2.1.2

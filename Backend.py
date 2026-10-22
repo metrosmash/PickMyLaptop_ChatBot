@@ -4,7 +4,6 @@ import os
 import json
 import streamlit as st
 from typing import Dict, Any
-import mysql.connector
 from typing import Annotated
 from langgraph.graph.message import add_messages
 from langgraph.graph import StateGraph, END
@@ -15,10 +14,21 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from pydantic import BaseModel, Field
 from langchain_core.tools import tool
 
+# Provider-agnostic database layer (see database/ for the implementation).
+# Backend.py no longer knows any host, user or password -- database/config.py resolves
+# them from DATABASE_URL -> env vars -> .env -> Streamlit secrets -> defaults.
+from database.db import get_db_connection as open_db_connection
+from database.db import run_query as execute_db_query
+from database.exceptions import DatabaseConnectionError
+from database.repository import (
+    attribute_range_search as repo_attribute_range_search,
+    search_by_attribute as repo_search_by_attribute,
+    search_by_range as repo_search_by_range,
+    search_specific_laptop as repo_search_specific_laptop,
+)
+
 
 # Setting up the Api keys
-db_username = st.secrets["DB_username"]
-db_password = st.secrets["DB_password"]
 Gemini_Api_key = st.secrets["API_key"]
 # this GOOGlE_API_KEY  for the current python session
 os.environ["GOOGLE_API_KEY"] = Gemini_Api_key
@@ -49,74 +59,27 @@ class ChatState(TypedDict):
 
 
 def get_db_connection():
+    """Checkout a pooled connection through the provider-agnostic database layer.
+
+    The host, port, user, password, database and SSL settings are resolved by
+    database/config.py, so moving from db4free -> Aiven -> anything else is a
+    configuration change, not a code change.
+    """
     try:
-        conn = mysql.connector.connect(
-            host="db4free.net",
-            user=db_username,
-            password=db_password,
-            database="metro_laptop",
-            connection_timeout=10  # ⏱ optional safety timeout
-        )
-        if conn.is_connected():
-            return conn
-        else:
-            raise ConnectionError(" Could not connect to the database")
-    except mysql.connector.Error as e:
-        # return {"error": f"MySQL error: {e}"}
-        st.error(f"Failed to connect to MySQL: {e}")
-        raise ConnectionError(f"MySQL connection error: {e}")
-
-
-
-
+        return open_db_connection()
+    except DatabaseConnectionError as error:
+        st.error(f"Failed to connect to the database: {error}")
+        raise
 
 
 def query_sql_database(query: str, state: Dict = None, values=None):
+    """Execute a parameterized SQL query through the shared database layer.
+
+    Kept as a thin facade so the LangChain tools below never need to know about
+    connections, pooling, reconnects or placeholder binding -- all of that lives in
+    database/db.py::run_query. It still returns ``list[dict]`` or ``{"error": ...}``.
     """
-    Execute a SQL query using a persistent connection.
-
-    - query: SQL string with %s placeholders
-    - values: None, a single value, or a tuple/list of multiple values
-    - returns: list of dict rows or error dict
-    :type state: object
-    """
-    conn = st.session_state.db_conn  # use the persistent connection
-    query_type = state.get("query_type") if state else "use_value"
-
-    try:
-        with conn.cursor() as cursor:
-            # Convert single value to tuple if needed
-            if query_type == "use_value":
-                if not isinstance(values, (tuple, list)):
-                    values = (values,)
-                cursor.execute(query, values)
-
-            elif query_type == "use_keyword":
-                # Keyword searches may require multiple placeholders
-                if not isinstance(values, (tuple, list)):
-                    values = tuple([values] * query.count("%s"))
-                cursor.execute(query, values)
-
-            elif query_type == "use_range":
-                # Handle BETWEEN queries
-                cursor.execute(query, values)
-            # if values is not None:
-            #     if not isinstance(values, (tuple, list)):
-            #         values = (values,)
-            #     cursor.execute(query, values)
-            else:
-                cursor.execute(query)
-
-            results = cursor.fetchall()
-            columns = [col[0] for col in cursor.description]
-            return [dict(zip(columns, row)) for row in results]
-
-    except mysql.connector.Error as e:
-        # Try to reconnect once if connection dropped
-        if not conn.is_connected():
-            st.session_state.db_conn = get_db_connection()
-            return query_sql_database(query, values, state)
-        return {"error": f"MySQL error: {e}"}
+    return execute_db_query(query, state=state, values=values)
 
 
 # Setting up the tools that will be used
@@ -131,18 +94,9 @@ def attribute_search(attribute: str, value: object, state=None) -> dict:
     Search laptops where a specific column matches a given value.
     Example: search_by_attribute("Brand", "Dell")
     """
-    ALLOWED_COLUMNS = {"id", "Brand", "Product_Description", "Screen_Size", "RAM", "Processor",
-                       "GPU", "GPU_Type", "Resolution", "Condition1", "Price", "SSD", "HDD"}
-    if attribute not in ALLOWED_COLUMNS:
-        raise ValueError("Invalid attribute name")
-
-    query = f"SELECT * FROM `laptop_dataset` WHERE LOWER(`{attribute}`) LIKE %s LIMIT 10;"
-    like_value = f"%{value.lower()}%"
-
-    # Set query type dynamically
-    if state is not None:
-        state["query_type"] = "use_value"
-    return query_sql_database(query, state, value)
+    # Column validation and the SQL itself live in database/repository.py
+    # (one source of truth -- no more duplicated allow-lists).
+    return repo_search_by_attribute(attribute, value, state=state)
 
 
 #  Search for a specific laptop (by name or description)
@@ -150,28 +104,12 @@ class SpecificSearch(BaseModel):
     keyword: object = Field(description = "specific keyword to search for on the database ")
 
 
-
-def search_specific_laptop(keyword: object,  state=None)-> dict:
+def search_specific_laptop(keyword: object, state=None) -> dict:
     """
     Search for a laptop by brand, product description, or processor containing the keyword.
     Example: search_specific_laptop("MacBook")
     """
-    query = """SELECT * FROM `laptop_dataset` 
-    WHERE Brand LIKE %s OR Product_Description LIKE %s OR Processor LIKE %s OR Screen_Size LIKE %s OR RAM LIKE %s OR 
-    GPU LIKE %s OR GPU_Type LIKE %s OR Condition1 Like %s LIMIT 10"""
-
-    keyword = f"%{keyword}%"  # Partial match
-    if state is not None:
-        state["query_type"] = "use_keyword"
-
-    # return query_sql_database(query, state, keyword)
-    # Correct order of parameters: query, query_type, values
-    return query_sql_database(
-        query=query,
-        state = state,
-        values=(keyword, keyword, keyword, keyword, keyword, keyword, keyword, keyword)
-    )
-
+    return repo_search_specific_laptop(keyword, state=state)
 
 
 #  Search by range of common attributes
@@ -181,26 +119,12 @@ class RangeSearch(BaseModel):
     max_value: int = Field(description = "the maximum value in the range of search")
 
 
-
-def search_by_range(attribute: str, min_value: int, max_value: int, state=None)-> dict:
+def search_by_range(attribute: str, min_value: int, max_value: int, state=None) -> dict:
     """
     Search Laptop where a numeric attribute falls between two values.
     Example: search_by_range("Price", 500, 1000)
     """
-
-    allowed_columns = {"id", "Brand", "Product_Description", "Screen_Size", "RAM", "Processor",
-                       "GPU", "GPU_Type", "Resolution", "Condition1", "Price", "SSD", "HDD"}
-
-    if attribute not in allowed_columns:
-        raise ValueError("Invalid attribute name")
-
-    query = f"SELECT * FROM `laptop_dataset` WHERE {attribute} BETWEEN %s AND %s LIMIT 10"
-
-    if state is not None:
-        state["query_type"] = "use_range"
-
-    return query_sql_database(query, state, values = (min_value, max_value))
-
+    return repo_search_by_range(attribute, min_value, max_value, state=state)
 
 
 class AttributeRangeSearch(BaseModel):
@@ -210,6 +134,7 @@ class AttributeRangeSearch(BaseModel):
     min_value: int = Field(description="Minimum value for the range filter")
     max_value: int = Field(description="Maximum value for the range filter")
 
+
 def attribute_range_search(
     attribute: str,
     value: str,
@@ -218,7 +143,6 @@ def attribute_range_search(
     max_value: int,
     state=None
 ) -> dict:
-
     """
     Search laptops where a specific attribute matches a value AND a numeric column falls within a range.
     Example:
@@ -227,34 +151,11 @@ def attribute_range_search(
             range_column="Price", min_value=100, max_value=500
         )
     """
-    # 1. Validate inputs
-    allowed_text_columns = {"Brand", "Product_Description", "Processor", "Condition", "GPU", "GPU_Type"}
-    allowed_numeric_columns = {"Price", "RAM", "SSD", "HDD", "Screen_Size"}
-
-    if attribute not in allowed_text_columns:
-        raise ValueError(f"Invalid text column: {attribute}")
-    if range_column not in allowed_numeric_columns:
-        raise ValueError(f"Invalid numeric column: {range_column}")
-
-    # 2. Build the query
-    query = f"""
-    SELECT * FROM `laptop_dataset`
-    WHERE LOWER(`{attribute}`) LIKE %s
-    AND `{range_column}` BETWEEN %s AND %s
-    LIMIT 10;
-    """
-
-    # 3. Prepare values
-    like_value = f"%{value.lower()}%"
-    values = (like_value, min_value, max_value)
-
-    # 4. Mark query type in state (optional)
-    if state is not None:
-        state["query_type"] = "specific_range"
-
-    # 5.Execute
-    return query_sql_database(query, state = state, values=values)
-
+    # Column validation and the SQL live in database/repository.py. Note the column
+    # is `Condition1` in the dataset (the old inline allow-list said `Condition`).
+    return repo_attribute_range_search(
+        attribute, value, range_column, min_value, max_value, state=state
+    )
 
 
 @tool(args_schema=AttributeSearch)
@@ -328,7 +229,9 @@ class BasicToolNode():
                 "result": tool_result
             })
 
-            return inputs
+        # Run EVERY tool call in the message, not just the first one.
+        # (The old code returned inside the loop, silently dropping parallel calls.)
+        return inputs
 
 
 def route_tools(
@@ -360,9 +263,6 @@ llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash")
 tools = [get_attribute_search_tool, get_specific_search_tool, get_range_search_tool, get_attribute_range_search]
 
 
-
-
-
 def chatbot_with_welcome_msg(state: ChatState) -> ChatState:
     llm_with_tools = llm.bind_tools(tools)
 
@@ -391,8 +291,6 @@ def chatbot_with_welcome_msg(state: ChatState) -> ChatState:
     return state | {"messages": [new_output]}
 
 
-
-
 # --- Build graph ---
 
 graph = StateGraph(ChatState)
@@ -405,14 +303,15 @@ graph.set_entry_point("chatbot")
 graph.add_conditional_edges(
     "chatbot",
     route_tools,
-    # The following dictionary lets you tell the graph to interpret the condition's outputs as a specific node
-    # It defaults to the identity function, but if you
-    # want to use a node named something else apart from "tools",
-    # You can update the value of the dictionary to something else
-    # e.g., "tools": "my_tools"
+    # The following dictionary lets you tell the graph how to interpret the
+    # condition's outputs as node names.
     {"tools": "tools", END: END},
 )
-graph.set_finish_point("chatbot")
+
+# IMPORTANT: send the tool results back to the chatbot so the LLM can summarise
+# them. Without this edge the graph ends right after the tools run and the user
+# only ever sees the "Let me check the database for you..." placeholder.
+graph.add_edge("tools", "chatbot")
 
 agent_app = graph.compile()
 
@@ -423,4 +322,3 @@ def init_state() -> Dict[str, Any]:
             "finished": False,
             "tool_in_use": False,
             "tool_context": []}
-
