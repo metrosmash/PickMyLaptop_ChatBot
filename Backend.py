@@ -258,7 +258,7 @@ def route_tools(
 
 # --- Define chatbot node ---
 
-llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash")
+llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash-lite")
 
 tools = [get_attribute_search_tool, get_specific_search_tool, get_range_search_tool, get_attribute_range_search]
 
@@ -275,6 +275,7 @@ def chatbot_with_welcome_msg(state: ChatState) -> ChatState:
             context_summary += (
                 f"\nTool {idx}: {ctx['tool']}\n"
                 f"Args: {json.dumps(ctx['args'], indent=2)}\n"
+                # Bug below on line 279
                 f"Result: {json.dumps(ctx['result'], indent=2)}\n"
             )
         system_prompt += context_summary
