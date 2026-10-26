@@ -16,6 +16,7 @@ The rest of the app (Backend.py) should never talk to ``mysql.connector`` direct
 from __future__ import annotations
 
 import threading
+import logging 
 from typing import Any, Optional
 
 import mysql.connector
@@ -23,6 +24,10 @@ from mysql.connector import pooling
 
 from .config import Settings, connect_kwargs, get_settings
 from .exceptions import DatabaseConnectionError
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(format = '%(levelname)s:%(message)s on %(asctime)s', datefmt = '%d/%m/%Y @ %I:%M:%S %p',filename = "database_db.log", level = logging.DEBUG)
+logger.info("New session started")
 
 _pool = None
 _pool_lock = threading.Lock()
@@ -70,7 +75,10 @@ def get_db_connection(settings: Optional[Settings] = None):
             pass
         raise DatabaseConnectionError("Could not establish a live database connection.")
     except mysql.connector.Error as error:
-        raise DatabaseConnectionError(f"Could not connect to the database: {error}") from error
+        logger.warning("MySQL connection failed", exc_info=error)
+        raise DatabaseConnectionError(f"Could not connect to the database ") from error
+
+
 
 
 def release_connection(conn: Any) -> None:
@@ -95,7 +103,8 @@ def health_check(settings: Optional[Settings] = None) -> dict:
             version = cursor.fetchone()[0]
         return {"ok": True, "version": version}
     except mysql.connector.Error as error:
-        raise DatabaseConnectionError(f"Database health check failed: {error}") from error
+        logger.warning("Database health check failed with", exc_info = error)
+        raise DatabaseConnectionError(f"Database health check failed ") from error 
     finally:
         release_connection(conn)
 
