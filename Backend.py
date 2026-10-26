@@ -270,7 +270,7 @@ def route_tools(
 
 # --- Define chatbot node ---
 
-llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash-lite")
+llm = ChatGoogleGenerativeAI(model="gemini-3.5-flash-lite")
 
 tools = [get_attribute_search_tool, get_specific_search_tool, get_range_search_tool, get_attribute_range_search]
 
