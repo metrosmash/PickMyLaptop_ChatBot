@@ -1,7 +1,6 @@
-from google import genai
-from google.genai import types
+
 import streamlit as st
-import mysql.connector
+
 
 
 # Streamlit UI
