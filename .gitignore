@@ -155,7 +155,8 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
-
+# leaving out my immature test 
+tests/test_database_repository.py
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
 #  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore

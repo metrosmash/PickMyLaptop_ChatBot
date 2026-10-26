@@ -2,6 +2,7 @@
 
 import os
 import json
+from decimal import Decimal
 import streamlit as st
 from typing import Dict, Any
 from typing import Annotated
@@ -30,7 +31,7 @@ from database.repository import (
 
 # Setting up the Api keys
 Gemini_Api_key = st.secrets["API_key"]
-# this GOOGlE_API_KEY  for the current python session
+# this GOOGLE_API_KEY  for the current python session
 os.environ["GOOGLE_API_KEY"] = Gemini_Api_key
 
 
@@ -39,6 +40,17 @@ with open("bot_prompt.txt", "r") as f:
     laptop_chatbot = f.read()
 
 Welcome_msg = "Hello, What can i do for you"  # just for now i will change it later
+
+
+
+def encode_extras(obj):
+    """
+    mysql database outputs Decimal for the price figures and json cant serialize them 
+    so this function changes those values to floats when json finds a decimal type value
+    """
+    if isinstance(obj, Decimal):
+        return float(obj)   # or str(obj) to keep exact precision
+    raise TypeError(f"Type {type(obj).__name__} is not JSON serializable")
 
 
 # --- Define the state ---
@@ -275,8 +287,8 @@ def chatbot_with_welcome_msg(state: ChatState) -> ChatState:
             context_summary += (
                 f"\nTool {idx}: {ctx['tool']}\n"
                 f"Args: {json.dumps(ctx['args'], indent=2)}\n"
-                # Bug below on line 279
-                f"Result: {json.dumps(ctx['result'], indent=2)}\n"
+                # encode extras function help here
+                f"Result: {json.dumps(ctx['result'], indent=2, default=encode_extras)}\n"
             )
         system_prompt += context_summary
 
